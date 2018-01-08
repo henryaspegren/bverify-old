@@ -12,7 +12,10 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>1.6</maven.compiler.source>
+    <maven.compiler.target>1.6</maven.compiler.target>
   </properties>
+
 
   <dependencies>
     <dependency>
@@ -21,5 +24,10 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>fastsig</groupId>
+      <artifactId>fastsig</artifactId>
+       <version>0.0.1-SNAPSHOT</version>
+	</dependency>    
   </dependencies>
 </project>
