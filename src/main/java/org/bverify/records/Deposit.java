@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.bverify.accounts.Account;
 
+import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
 public class Deposit extends Change {
@@ -14,10 +15,13 @@ public class Deposit extends Change {
 	}
 
 	public int getTotalAmount() {
+		// total amount is always positive
+		assert this.amount > 0;
 		return this.amount;
 	}
 
 	public int getNetChange() {
+		assert this.amount > 0;
 		return this.amount;
 	}
 	
@@ -48,7 +52,7 @@ public class Deposit extends Change {
 		byte[] goodType = this.goodType.getBytes();
 		byte[] employeeid = Longs.toByteArray(this.employee.getId());
 		byte[] accountid = Longs.toByteArray(this.recepient.getId());
-		byte amount = (byte) this.amount;
+		byte[] amount = Ints.toByteArray(this.amount);
 		byte[] date = this.dateCreated.toString().getBytes();
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );

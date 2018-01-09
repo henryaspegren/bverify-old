@@ -5,6 +5,7 @@ import java.io.IOException;
 
 import org.bverify.accounts.Account;
 
+import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
 public class Withdrawal extends Change {
@@ -14,11 +15,14 @@ public class Withdrawal extends Change {
 	}
 
 	public int getTotalAmount() {
-		return -1*this.amount;
+		int total = this.amount;
+		assert total > 0;
+		return total;
 	}
 
 	public int getNetChange() {
-		return this.amount;
+		assert this.amount > 0;
+		return -1*this.amount;
 	}
 	
 	public Account getRecepientAccount() {
@@ -48,7 +52,7 @@ public class Withdrawal extends Change {
 		byte[] goodType = this.goodType.getBytes();
 		byte[] employeeid = Longs.toByteArray(this.employee.getId());
 		byte[] accountid = Longs.toByteArray(this.recepient.getId());
-		byte amount = (byte) this.amount;
+		byte[] amount = Ints.toByteArray(this.amount);
 		byte[] date = this.dateCreated.toString().getBytes();
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );

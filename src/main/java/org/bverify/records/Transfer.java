@@ -10,6 +10,7 @@ import java.util.Date;
 
 import org.bverify.accounts.Account;
 
+import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
 public class Transfer implements Record {
@@ -33,6 +34,7 @@ public class Transfer implements Record {
 	
 		
 	public int getTotalAmount() {
+		assert this.amount > 0;
 		return this.amount;
 	}
 
@@ -119,7 +121,7 @@ public class Transfer implements Record {
 		byte[] goodType = this.goodType.getBytes();
 		byte[] senderid = Longs.toByteArray(this.sender.getId());
 		byte[] accountid = Longs.toByteArray(this.recepient.getId());
-		byte amount = (byte) this.amount;
+		byte[] amount = Ints.toByteArray(this.amount);
 		byte[] date = this.dateCreated.toString().getBytes();
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
@@ -155,7 +157,7 @@ public class Transfer implements Record {
 		stringRep.append("Sender: ");
 		stringRep.append(this.sender.getName());
 		stringRep.append("\t");
-		stringRep.append(this.sender);
+		stringRep.append(this.senderSignature);
 		stringRep.append(System.getProperty("line.separator"));
 		stringRep.append("Good: ");
 		stringRep.append(this.goodType);

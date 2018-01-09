@@ -25,17 +25,22 @@ public class Account {
 		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 	}
 	
-	public Account(String name, long id) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidKeyException {
+	public Account(String name, long id) {
 		this.name = name;
 		this.id = id;
 		
 		// TODO: this should later be decopuled and moved into a utility 
 		// 			module that abstracts aways signing details
 		// 			for now we leave it 
-		KeyPairGenerator ecdsaGen = KeyPairGenerator.getInstance("ECDSA", "BC");
-        ecdsaGen.initialize(256, new SecureRandom());
-        this.ecdsaKey = ecdsaGen.genKeyPair();
-        this.ecdsaSignature = Signature.getInstance("SHA256withECDSA", "BC");
+		try {
+			KeyPairGenerator ecdsaGen = KeyPairGenerator.getInstance("ECDSA", "BC");
+	        ecdsaGen.initialize(256, new SecureRandom());
+	        this.ecdsaKey = ecdsaGen.genKeyPair();
+	        this.ecdsaSignature = Signature.getInstance("SHA256withECDSA", "BC");
+		} catch(Exception e) {
+			e.printStackTrace();
+			System.out.println("SOMETHING WENT WRONG");
+		}
 	}
 	
 	public PublicKey getPubKey() {
