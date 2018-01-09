@@ -1,5 +1,8 @@
 package org.bverify.records;
 
+import java.util.Date;
+
+
 /**
  * Interface for the transaction records that <b>bverify</b> stores.
  * Records modify the state of the warehouse (e.g. by withdrawing goods
@@ -23,19 +26,36 @@ public interface Record {
 	 * @return
 	 */
 	public int getNetChange();
-	
-	/**
-	 * Get the total number of units loaned in this record
-	 * @return
-	 */
-	public int getTotalLoaned();
-	
-	
+		
 	/**
 	 * Get the type of good referenced in this record. 
 	 * For now goods are identified by a string
 	 * @return
 	 */
 	public String getTypeOfGood();
+	
+	/**
+	 * Returns true if the record has been signed by the required parties
+	 * and false if it has not been signed
+	 * @return
+	 */
+	public boolean isSigned();
+	
+	/**
+	 * Returns true if the record, as a whole is valid
+	 * and false if it is invalid 
+	 * 
+	 * TODO: define what makes a record valid v.s. invalid
+	 * @return
+	 */
+	public boolean isValid();
+	
+	
+	/**
+	 * Returns the date the record was created 
+	 * @return
+	 */
+	public Date dateCreated();
+	
 	
 }

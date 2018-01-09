@@ -32,7 +32,7 @@ public class TestRecords
     /**
      * Rigourous Test :-)
      */
-    public void testApp()
+    public void testRecords()
     {
         assertTrue( true );
     }
