@@ -11,7 +11,7 @@ import org.junit.Assert;
 
 import org.junit.Test;
 
-import com.google.common.primitives.Ints;
+import com.google.common.primitives.*;
 		
 public class TestRecordAggregator {
 	
