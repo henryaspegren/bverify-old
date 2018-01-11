@@ -1,16 +1,44 @@
 package org.bverify.aggregators;
 
+import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.apache.commons.lang3.SerializationUtils;
+import org.bouncycastle.util.Arrays;
 import org.bverify.records.Record;
 
 import com.google.common.primitives.Ints;
 
-
-public class RecordAggregation {
+/**
+ * Represents a recursive aggregation of records. 
+ *  
+ *  Here is the recursion:
+ *  
+ *  	BASE CASES(records)
+ * 		Deposit(amount): netAmount: amount, totalAmount: amount, 
+ * 		Transfer(amount): netAmount: 0, totalAmount: amount
+ * 		Withdrawal(amount): netAmount: -1*amount, totalAmount: amount
+ * 		
+ * 		for all of these 
+ * 		hash = SHA-256(Record -> to Bytes)	
+ * 
+ * 	RECURSIVE CASE
+ * 		Agg(RecordAggregation a, RecordAggregation b) : 
+ * 			netAmount = a.netAmount + b.netAmount;
+ * 			totalAmount = a.totalAmount + b.totalAmount
+ * 			hash = SHA-256(netAmount || totalAmount || a.hash || b.hash)
+ * 
+ * 
+ * @author henryaspegren
+ *
+ */
+public class RecordAggregation implements Serializable {
 	
+	
+	private static final long serialVersionUID = 1L;
+
 	// 32 bytes for SHA-256 hash
 	public static final byte[] NULL_HASH = new byte[32];
 	
@@ -44,7 +72,7 @@ public class RecordAggregation {
 		this.netAmount = val.getNetChange();
 		// for now this is just the string but 
 		// TODO: replace with a google protobuf
-		byte[] recordSerialization = val.toString().getBytes();
+		byte[] recordSerialization = SerializationUtils.serialize(val);
 		byte[] hashRes; 
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -144,11 +172,22 @@ public class RecordAggregation {
 		try {
 			sb.append(new String(this.hash, "UTF-8"));
 		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return sb.toString();
 	}
 	
+	@Override
+	public boolean equals(Object arg0) {
+		if(arg0 instanceof RecordAggregation) {
+			RecordAggregation arg = (RecordAggregation) arg0;
+			if(Arrays.areEqual(arg.getHash(), this.getHash()) &&
+					arg.netAmount == this.netAmount &&
+					arg.totalAmount == this.totalAmount) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 }

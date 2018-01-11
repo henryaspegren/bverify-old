@@ -15,6 +15,7 @@ import com.google.common.primitives.Longs;
 
 public class Transfer implements Record {
 
+	private static final long serialVersionUID = 1L;
 	private final Date dateCreated;
 	private final String goodType;
 	private final int amount;
@@ -168,6 +169,22 @@ public class Transfer implements Record {
 		stringRep.append("Date Created: ");
 		stringRep.append(this.dateCreated);
 		return stringRep.toString();		
+	}
+	
+	@Override
+	public boolean equals(Object arg0) {
+		if(arg0 instanceof Transfer) {
+			Transfer ar = (Transfer) arg0;
+			if(ar.dateCreated.equals(this.dateCreated) &&
+					ar.goodType.equals(this.goodType) &&
+					ar.amount == this.amount &&
+					ar.recepient.equals(this.recepient) &&
+					ar.sender.equals(this.sender)
+			) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 }

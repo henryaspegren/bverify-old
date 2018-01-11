@@ -1,5 +1,6 @@
 package org.bverify.accounts;
 
+import java.io.Serializable;
 import java.security.InvalidKeyException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -11,7 +12,9 @@ import java.security.Security;
 import java.security.Signature;
 import java.security.SignatureException;
 
-public class Account {
+public class Account implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
 	
 	/** Details */
 	private final String name;
@@ -19,7 +22,9 @@ public class Account {
 	
 	/** For signing - we use ECDSA with SHA 256 */
 	private KeyPair ecdsaKey; 
-	private Signature ecdsaSignature;
+	
+	// should not be serailized
+	private transient Signature ecdsaSignature;
 	
 	static {
 		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
@@ -67,6 +72,21 @@ public class Account {
 
 	public long getId() {
 		return id;
+	}
+	
+	@Override
+	public boolean equals(Object arg0) {
+		if(arg0 instanceof Account){
+			Account ar = (Account) arg0;
+			if(
+					ar.id == this.id && 
+					ar.name.equals(this.name) &&
+					ar.ecdsaKey.getPublic().equals(this.ecdsaKey.getPublic())
+				) {
+				return true;
+			}
+		}
+		return false;
 	}
 		
 }

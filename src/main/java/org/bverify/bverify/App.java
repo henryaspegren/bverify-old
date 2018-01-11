@@ -70,16 +70,15 @@ public class App
 		ArrayStore<RecordAggregation, Record> store = new ArrayStore<RecordAggregation,Record>();    
 		
 		HistoryTree<RecordAggregation, Record> histtree = new HistoryTree<RecordAggregation, Record>(aggregator, store);
+		
 		histtree.append(exampleDeposit);
 		histtree.append(exampleTransfer);
 		System.out.println(histtree);
-		System.out.println(histtree.agg());
 		System.out.println();
 		histtree.append(exampleWithdrawal);
 		System.out.println(histtree);
 		System.out.println(histtree.agg());
-		System.out.println();    
-		
+		System.out.println();    		
 		
 		NetworkParameters regtest  = RegTestParams.get();
 		
@@ -141,9 +140,9 @@ public class App
 		
 		
 		
-		
-		
     }
+    
+    
     
     
 }

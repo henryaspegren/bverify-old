@@ -11,6 +11,7 @@ import org.bverify.accounts.Account;
 
 public abstract class Change implements Record {
 
+	private static final long serialVersionUID = 1L;
 	protected final Date dateCreated;
 	protected final String goodType;
 	protected final int amount;
