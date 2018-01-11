@@ -16,12 +16,14 @@ public class Withdrawal extends Change {
 		super(goodType, amount, recepient, employee);
 	}
 
+	@Override
 	public int getTotalAmount() {
 		int total = this.amount;
 		assert total > 0;
 		return total;
 	}
 
+	@Override
 	public int getNetChange() {
 		assert this.amount > 0;
 		return -1*this.amount;
@@ -35,6 +37,7 @@ public class Withdrawal extends Change {
 		return this.employee;
 	}
 	
+	@Override
 	public boolean isValid() {
 		// later can be made richer and possible depend on 
 		// current state, etc. 
@@ -78,6 +81,7 @@ public class Withdrawal extends Change {
 		
 	}
 	
+	@Override
 	public String toString() {
 		StringBuilder stringRep = new StringBuilder();
 		stringRep.append("WITHDRAWAL");

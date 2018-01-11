@@ -30,18 +30,22 @@ public abstract class Change implements Record {
 		this.employeeSignature = null;
 		this.dateCreated = new Date();
 	}
-
+	
+	@Override
 	public abstract int getTotalAmount();
 
+	@Override
 	public abstract int getNetChange();
 	
 	public abstract byte[] getSignedPortion();
 	
+	@Override
 	public abstract String toString();
 	
+	@Override
 	public abstract boolean isValid();
 
-	
+	@Override
 	public String getTypeOfGood() {
 		return this.goodType;
 	}
@@ -54,6 +58,10 @@ public abstract class Change implements Record {
 		return this.employee;
 	}
 	
+	/**
+	 * Note that the signature produced will be different each time
+	 * due to the fact we are using ECDSA (select a K at random)
+	 */
 	public void signEmployee() {
 		try {
 			this.employeeSignature = this.employee.sign(this.getSignedPortion());
@@ -72,6 +80,10 @@ public abstract class Change implements Record {
 		}
 	}
 	
+	/**
+	 * Note that the signature produced will be different each time
+	 * due to the fact we are using ECDSA (select a K at random)
+	 */
 	public void signRecipient() {
 		try {
 			this.recepientSignature = this.recepient.sign(this.getSignedPortion());
@@ -90,6 +102,7 @@ public abstract class Change implements Record {
 		}		
 	}
 
+	@Override
 	public boolean isSigned() {
 		if(this.recepientSignature != null && this.employeeSignature != null) {
 			byte[] message = this.getSignedPortion();
@@ -109,6 +122,7 @@ public abstract class Change implements Record {
 		}
 	}
 
+	@Override
 	public Date dateCreated() {
 		return this.dateCreated;
 	}

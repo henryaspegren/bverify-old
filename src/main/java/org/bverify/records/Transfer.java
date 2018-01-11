@@ -33,12 +33,13 @@ public class Transfer implements Record {
 		this.dateCreated = new Date();
 	}
 	
-		
+	@Override
 	public int getTotalAmount() {
 		assert this.amount > 0;
 		return this.amount;
 	}
 
+	@Override
 	public int getNetChange() {
 		return 0;
 	}
@@ -85,6 +86,7 @@ public class Transfer implements Record {
 		}
 	}
 
+	@Override
 	public boolean isSigned() {
 		if(this.recepientSignature != null && this.senderSignature != null) {
 			byte[] message = this.getSignedPortion();
@@ -104,6 +106,7 @@ public class Transfer implements Record {
 		}
 	}
 
+	@Override
 	public boolean isValid() {
 		if( this.amount > 0 && this.isSigned()) {
 			return true;
@@ -112,7 +115,8 @@ public class Transfer implements Record {
 			return false;
 		}
 	}
-
+	
+	@Override
 	public Date dateCreated() {
 		return this.dateCreated;
 	}
@@ -146,6 +150,7 @@ public class Transfer implements Record {
 		
 	}
 	
+	@Override
 	public String toString() {
 		StringBuilder stringRep = new StringBuilder();
 		stringRep.append("TRANSFER");

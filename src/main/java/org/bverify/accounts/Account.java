@@ -44,7 +44,7 @@ public class Account implements Serializable {
 	        this.ecdsaSignature = Signature.getInstance("SHA256withECDSA", "BC");
 		} catch(Exception e) {
 			e.printStackTrace();
-			System.out.println("SOMETHING WENT WRONG");
+			throw new RuntimeException("No SHA256 Provider");
 		}
 	}
 	
@@ -53,7 +53,8 @@ public class Account implements Serializable {
 	}
 
 	public byte[] sign(byte[] message) throws InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException, SignatureException {
-        // use new randomness for each signature 
+		this.ensureSignatureLoaded();
+		// use new randomness for each signature 
 		this.ecdsaSignature.initSign(this.ecdsaKey.getPrivate(), new SecureRandom());
         this.ecdsaSignature.update(message);
         byte[] ecdsaSignatureBytes = this.ecdsaSignature.sign();
@@ -61,7 +62,8 @@ public class Account implements Serializable {
 	}
 	
 	public boolean checkSignature(byte[] message, byte[] signature) throws SignatureException, InvalidKeyException {
-        this.ecdsaSignature.initVerify(this.ecdsaKey.getPublic());
+		this.ensureSignatureLoaded();
+		this.ecdsaSignature.initVerify(this.ecdsaKey.getPublic());
 		this.ecdsaSignature.update(message);
 		return this.ecdsaSignature.verify(signature);
 	}
@@ -72,6 +74,22 @@ public class Account implements Serializable {
 
 	public long getId() {
 		return id;
+	}
+	
+	/**
+	 * When accounts are serialized we do not serialize the Signature 
+	 * (because this must be loaded fresh from a provider each time).
+	 * Thus we may need to setup a new Signature
+	 */
+	private void ensureSignatureLoaded() {
+		if(this.ecdsaSignature == null) {
+			try {
+				this.ecdsaSignature = Signature.getInstance("SHA256withECDSA", "BC");
+			} catch (NoSuchAlgorithmException | NoSuchProviderException e) {
+				e.printStackTrace();
+				throw new RuntimeException("No SHA256 Provider");
+			}
+		}
 	}
 	
 	@Override

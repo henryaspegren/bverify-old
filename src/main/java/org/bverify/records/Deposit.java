@@ -15,13 +15,15 @@ public class Deposit extends Change {
 	public Deposit(String goodType, int amount, Account recepient, Account employee) {
 		super(goodType, amount, recepient, employee);
 	}
-
+	
+	@Override
 	public int getTotalAmount() {
 		// total amount is always positive
 		assert this.amount > 0;
 		return this.amount;
 	}
 
+	@Override
 	public int getNetChange() {
 		assert this.amount > 0;
 		return this.amount;
@@ -31,10 +33,12 @@ public class Deposit extends Change {
 		return this.recepient;
 	}
 	
+	
 	public Account getEmployeeAccount() {
 		return this.employee;
 	}
 	
+	@Override
 	public boolean isValid() {
 		// later can be made richer and possible depend on 
 		// current state, etc. 
@@ -78,6 +82,7 @@ public class Deposit extends Change {
 		
 	}
 	
+	@Override
 	public String toString() {
 		StringBuilder stringRep = new StringBuilder();
 		stringRep.append("DEPSOIT");

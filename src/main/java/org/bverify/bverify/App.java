@@ -1,6 +1,9 @@
 package org.bverify.bverify;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import org.bitcoinj.core.Address;
@@ -50,8 +53,15 @@ public class App
         //System.out.println(tree.agg());
          */
    
-        Account alice = new Account("Alice", 1);
-        Account bob = new Account("Bob", 2);
+        
+        ObjectInputStream oosAlice = new ObjectInputStream(new FileInputStream("/home/henryaspegren/Documents/DCI_CODE/bverify/saved_objects/alice"));
+        Account alice = (Account) oosAlice.readObject();
+        oosAlice.close();
+        
+        ObjectInputStream oosBob = new ObjectInputStream(new FileInputStream("/home/henryaspegren/Documents/DCI_CODE/bverify/saved_objects/bob"));
+        Account bob  = (Account) oosBob.readObject();
+        oosBob.close();
+        	
         
         Deposit exampleDeposit = new Deposit("CORN", 100, alice, bob);
         exampleDeposit.signRecipient();
@@ -72,21 +82,29 @@ public class App
 		HistoryTree<RecordAggregation, Record> histtree = new HistoryTree<RecordAggregation, Record>(aggregator, store);
 		
 		histtree.append(exampleDeposit);
+		histtree.append(exampleDeposit);
+		histtree.append(exampleDeposit);
+		histtree.append(exampleDeposit);
+		histtree.append(exampleDeposit);
 		histtree.append(exampleTransfer);
-		System.out.println(histtree);
-		System.out.println();
 		histtree.append(exampleWithdrawal);
-		System.out.println(histtree);
-		System.out.println(histtree.agg());
-		System.out.println();    		
+	
 		
+		RecordAggregation agg = histtree.agg();
+		byte[] hashForCatena = agg.getHash();
+		
+		histtree.serializeTree();
+		
+		
+		
+		/**
 		NetworkParameters regtest  = RegTestParams.get();
 		
-		String hextxid = "25a3420fb056107cde48d1c0d0ba685d06d57a347653a7d032ac6b00c7310f20";
-		String hexChainAddr = "miXaFPV2eXpATWU3jpUqoEVwgTs8JJYSHb";
-		String secretKey = "cQNaheD7YSvaoYhruEt2NkUMR8vy93iG8phn3h59YQnCPR1GGEn7";
-		String directoryNameClient = "/home/henryaspegren/Documents/DCI_CODE/catena-java/client";
-		String directoryNameServer = "/home/henryaspegren/Documents/DCI_CODE/catena-java/server";
+		String hextxid = "8fe004f11f736a0156a457cc18e90e632b267ccd2d224f4c02a9621a0ae7a254";
+		String hexChainAddr = "mpnDfLUFKStTmsiqPricEB9xKL7eH7fKrZ";
+		String secretKey = "cPM8zZD2g6eVCyHjYj1H6xj45WQoooAPPZjHPtry1WDdjKoJXL1s";
+		String directoryNameClient = "/home/henryaspegren/Documents/DCI_CODE/bverify/client";
+		String directoryNameServer = "/home/henryaspegren/Documents/DCI_CODE/bverify/server";
 		
 		
 		Sha256Hash txid = Sha256Hash.wrap(hextxid);
@@ -96,29 +114,28 @@ public class App
 		File directoryClient = new File(directoryNameClient);
 		File directoryServer = new File(directoryNameServer);
 				
-		
-		CatenaClient catenaClient = new CatenaClient(regtest, 
-				directoryClient, txid, chainAddr, null);
-		
+	
 		CatenaServer catenaServer = new CatenaServer(regtest,
 				directoryServer, chainKey, txid);
 		
 		catenaServer.connectToLocalHost();
 		catenaServer.startAsync();
 		catenaServer.awaitRunning();
-		
-		String statement = "NEW STATEMENT FOR CATENA";
-		Transaction txn = catenaServer.appendStatement(statement.getBytes());
+
+		Transaction txn = catenaServer.appendStatement(hashForCatena);
         CatenaUtils.generateBlockRegtest();
 
         Transaction prevTx = CatenaUtils.getPrevCatenaTx(catenaServer.getCatenaWallet(), txn.getHash());
 
         System.out.printf("Created tx '%s' with statement '%s' (prev tx is '%s')\n", txn.getHash(),
-        		statement, prevTx.getHash());
+        		hashForCatena.toString(), prevTx.getHash());
+	
+
 		
 		
+		CatenaClient catenaClient = new CatenaClient(regtest, 
+				directoryClient, txid, chainAddr, null);
 		
-		/**
 		catenaClient.connectToLocalHost();
 		catenaClient.startAsync();
 		catenaClient.awaitRunning();
@@ -132,13 +149,18 @@ public class App
 			CatenaStatement s = it.next();
             Transaction prevTx = CatenaUtils.getPrevCatenaTx(wallet, s.getTxHash());
             System.out.printf("Statement #%d: %s (tx %s, prev %s)\n", c, s.getAsString(), s.getTxHash(), prevTx.getHash());
+            if(c == 4) {
+            	boolean matches = Arrays.equals(hashForCatena, s.getData());
+            	System.out.println(new String(s.getData()));
+            	System.out.println(new String(hashForCatena));
+            	System.out.printf("Matches previous has %b", matches);
+            }
+            
             c = c +1;
         
 		}
-		**/
-		
-		
-		
+		*/
+	
 		
     }
     
