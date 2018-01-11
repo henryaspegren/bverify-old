@@ -10,11 +10,14 @@ import org.bverify.records.Transfer;
 import org.bverify.records.Withdrawal;
 import org.junit.Assert;
 
-import org.junit.Test;
-
 import com.google.common.primitives.*;
+
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
+import junit.framework.Test;
+
 		
-public class TestRecordAggregator {
+public class TestRecordAggregator extends TestCase {
 	
 	public static Account alice = new Account("Alice", 1);
 	public static Account bob = new Account("Bob", 2);
@@ -33,7 +36,24 @@ public class TestRecordAggregator {
 		} 
 	}
 	
-	@Test
+	/**
+	 * Test suite 
+	 * @param testName
+	 */
+    public TestRecordAggregator( String testName )
+    {
+        super( testName );
+    }
+
+    /**
+     * @return the suite of tests being tested
+     */
+    public static Test suite()
+    {
+        return new TestSuite( TestRecordAggregator.class );
+    }
+	
+	
 	public void testEmptyAgg() {
 		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		RecordAggregation recordagg = aggregator.emptyAgg();
@@ -43,7 +63,6 @@ public class TestRecordAggregator {
 		Assert.assertEquals(0, recordagg.getTotalAmount());
 	}
 	
-	@Test
 	public void testAggDeposit() {
 		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		
@@ -59,7 +78,6 @@ public class TestRecordAggregator {
 		Assert.assertEquals(100, recordagg.getTotalAmount());	
 	}
 	
-	@Test
 	public void testAggWithdrawl() {
 		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		
@@ -75,7 +93,6 @@ public class TestRecordAggregator {
 		Assert.assertEquals(50, recordagg.getTotalAmount());			
 	}
 	
-	@Test
 	public void testAggTransfer() {
 		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		
@@ -91,7 +108,6 @@ public class TestRecordAggregator {
 		Assert.assertEquals(50, recordagg.getTotalAmount());		
 	}
 	
-	@Test
 	public void testMultipleDepositAgg() {
 		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		
@@ -154,7 +170,6 @@ public class TestRecordAggregator {
 		
 	}
 	
-	@Test
 	public void testMultipleAggMixed() {
 CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		
@@ -264,7 +279,6 @@ CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 
 	}
 	
-	@Test
 	public void testRecordAggregationSerializationSingleRecord() {
 		Deposit record = new Deposit(goodCorn, 101, alice, bob);
 		RecordAggregation recordagg = new RecordAggregation(record);
@@ -275,7 +289,6 @@ CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		Assert.assertEquals(recordagg, recordaggFromBytes);
 	}
 	
-	@Test
 	public void testRecordAggregationSerilizationMultiple() {
 		Deposit recordA = new Deposit(goodCorn, 101, alice, bob);
 		Withdrawal recordB = new Withdrawal(goodCorn, 10, alice, charlie);

@@ -2,11 +2,15 @@ package org.bverify.records;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.accounts.Account;
-import org.junit.Test;
+
+import junit.framework.TestCase;
+import junit.framework.TestSuite;
+import junit.framework.Test;
+
 import org.junit.Assert;
 
 
-public class TestRecords {
+public class RecordTest extends TestCase {
 	
 	private static Account alice = new Account("Alice", 1);
 	private static Account bob = new Account("Bob", 2);
@@ -15,8 +19,25 @@ public class TestRecords {
 	private static String goodCorn = "CORN";
 	private static String goodWheat = "WHEAT";
 
+	/**
+	 * Test suite 
+	 * @param testName
+	 */
+    public RecordTest( String testName )
+    {
+        super( testName );
+    }
+
+    /**
+     * @return the suite of tests being tested
+     */
+    public static Test suite()
+    {
+        return new TestSuite( RecordTest.class );
+    }
+	
+	
 	@SuppressWarnings("unlikely-arg-type")
-	@Test
 	public void testDepositEquality(){
 
 		Deposit dep1 = new Deposit(goodCorn, 100, alice, bob);
@@ -34,7 +55,6 @@ public class TestRecords {
 		Assert.assertFalse(dep1.equals(dep6));
 	}
 	
-	@Test
 	public void testSerilaizationDeposit() {
 		Deposit dep = new Deposit(goodCorn, 100, alice, bob);
 		dep.signEmployee();
@@ -45,7 +65,6 @@ public class TestRecords {
 		Assert.assertEquals(rec, dep);
 	}
 	
-	@Test 
 	public void testSerializationWithdrawal() {
 		Withdrawal wd = new Withdrawal(goodCorn, 100, alice, charlie);
 		wd.signEmployee();
@@ -56,7 +75,6 @@ public class TestRecords {
 		Assert.assertEquals(rec, wd);
 	}
 	
-	@Test
 	public void testSerilizationTransfer() {
 		Transfer tf = new Transfer(goodCorn, 10, alice, charlie);
 		tf.signRecipient();
