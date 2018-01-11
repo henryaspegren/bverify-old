@@ -1,5 +1,15 @@
 package org.bverify.bverify;
 
+import java.io.File;
+import java.util.Iterator;
+
+import org.bitcoinj.core.Address;
+import org.bitcoinj.core.DumpedPrivateKey;
+import org.bitcoinj.core.ECKey;
+import org.bitcoinj.core.NetworkParameters;
+import org.bitcoinj.core.Sha256Hash;
+import org.bitcoinj.core.Transaction;
+import org.bitcoinj.params.RegTestParams;
 import org.bverify.accounts.Account;
 import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
@@ -7,10 +17,15 @@ import org.bverify.records.Deposit;
 import org.bverify.records.Record;
 import org.bverify.records.Transfer;
 import org.bverify.records.Withdrawal;
+import org.catena.client.CatenaClient;
+import org.catena.client.ClientApp;
+import org.catena.client.ClientWallet;
+import org.catena.common.CatenaApp;
+import org.catena.common.CatenaStatement;
+import org.catena.common.CatenaUtils;
+import org.catena.server.CatenaServer;
 
-import edu.rice.historytree.AggregationInterface;
 import edu.rice.historytree.HistoryTree;
-import edu.rice.historytree.aggs.SHA256AggB64;
 import edu.rice.historytree.storage.ArrayStore;
 
 /**
@@ -63,7 +78,71 @@ public class App
 		histtree.append(exampleWithdrawal);
 		System.out.println(histtree);
 		System.out.println(histtree.agg());
-		System.out.println();       
+		System.out.println();    
+		
+		
+		NetworkParameters regtest  = RegTestParams.get();
+		
+		String hextxid = "25a3420fb056107cde48d1c0d0ba685d06d57a347653a7d032ac6b00c7310f20";
+		String hexChainAddr = "miXaFPV2eXpATWU3jpUqoEVwgTs8JJYSHb";
+		String secretKey = "cQNaheD7YSvaoYhruEt2NkUMR8vy93iG8phn3h59YQnCPR1GGEn7";
+		String directoryNameClient = "/home/henryaspegren/Documents/DCI_CODE/catena-java/client";
+		String directoryNameServer = "/home/henryaspegren/Documents/DCI_CODE/catena-java/server";
+		
+		
+		Sha256Hash txid = Sha256Hash.wrap(hextxid);
+		Address chainAddr = Address.fromBase58(regtest, hexChainAddr);
+        ECKey chainKey = DumpedPrivateKey.fromBase58(regtest, secretKey).getKey(); 
+
+		File directoryClient = new File(directoryNameClient);
+		File directoryServer = new File(directoryNameServer);
+				
+		
+		CatenaClient catenaClient = new CatenaClient(regtest, 
+				directoryClient, txid, chainAddr, null);
+		
+		CatenaServer catenaServer = new CatenaServer(regtest,
+				directoryServer, chainKey, txid);
+		
+		catenaServer.connectToLocalHost();
+		catenaServer.startAsync();
+		catenaServer.awaitRunning();
+		
+		String statement = "NEW STATEMENT FOR CATENA";
+		Transaction txn = catenaServer.appendStatement(statement.getBytes());
+        CatenaUtils.generateBlockRegtest();
+
+        Transaction prevTx = CatenaUtils.getPrevCatenaTx(catenaServer.getCatenaWallet(), txn.getHash());
+
+        System.out.printf("Created tx '%s' with statement '%s' (prev tx is '%s')\n", txn.getHash(),
+        		statement, prevTx.getHash());
+		
+		
+		
+		/**
+		catenaClient.connectToLocalHost();
+		catenaClient.startAsync();
+		catenaClient.awaitRunning();
+		
+		ClientWallet wallet = catenaClient.getCatenaWallet();
+		
+		Iterator<CatenaStatement> it = wallet.statementIterator(true);
+
+		int c = 1; 
+		while(it.hasNext()) {
+			CatenaStatement s = it.next();
+            Transaction prevTx = CatenaUtils.getPrevCatenaTx(wallet, s.getTxHash());
+            System.out.printf("Statement #%d: %s (tx %s, prev %s)\n", c, s.getAsString(), s.getTxHash(), prevTx.getHash());
+            c = c +1;
+        
+		}
+		**/
+		
+		
+		
+		
+		
+		
     }
     
     
