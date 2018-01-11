@@ -8,9 +8,7 @@ import org.bverify.records.Record;
 import org.bverify.records.Transfer;
 import org.bverify.records.Withdrawal;
 
-import edu.rice.historytree.AggregationInterface;
 import edu.rice.historytree.HistoryTree;
-import edu.rice.historytree.aggs.SHA256AggB64;
 import edu.rice.historytree.storage.ArrayStore;
 
 /**
@@ -55,16 +53,23 @@ public class App
 		ArrayStore<RecordAggregation, Record> store = new ArrayStore<RecordAggregation,Record>();    
 		
 		HistoryTree<RecordAggregation, Record> histtree = new HistoryTree<RecordAggregation, Record>(aggregator, store);
+		
 		histtree.append(exampleDeposit);
 		histtree.append(exampleTransfer);
 		System.out.println(histtree);
-		System.out.println(histtree.agg());
 		System.out.println();
 		histtree.append(exampleWithdrawal);
 		System.out.println(histtree);
 		System.out.println(histtree.agg());
-		System.out.println();       
+		System.out.println();    
+		byte[] test = histtree.serializeTree();
+		System.out.println(test.toString());
+		
+		
+		
     }
+    
+    
     
     
 }

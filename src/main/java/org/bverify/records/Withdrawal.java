@@ -9,7 +9,9 @@ import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
 public class Withdrawal extends Change {
-	
+
+	private static final long serialVersionUID = 1L;
+
 	public Withdrawal(String goodType, int amount, Account recepient, Account employee) {
 		super(goodType, amount, recepient, employee);
 	}
@@ -102,6 +104,20 @@ public class Withdrawal extends Change {
 	}
 	
 	
-	
+	@Override
+	public boolean equals(Object arg0) {
+		if(arg0 instanceof Withdrawal) {
+			Withdrawal ar = (Withdrawal) arg0;
+			if(ar.dateCreated.equals(this.dateCreated) &&
+					ar.goodType.equals(this.goodType) &&
+					ar.amount == this.amount &&
+					ar.recepient.equals(this.recepient) &&
+					ar.employee.equals(this.employee)
+					) {
+				return true;
+			}
+		}
+		return false;
+	}
 
 }

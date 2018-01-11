@@ -1,5 +1,6 @@
 package org.bverify.records;
 
+import java.io.Serializable;
 import java.util.Date;
 
 
@@ -11,7 +12,7 @@ import java.util.Date;
  * @author henryaspegren
  *
  */
-public interface Record {
+public interface Record extends Serializable {
 	
 	/**
 	 * Get the total amount of goods referenced in this record. These

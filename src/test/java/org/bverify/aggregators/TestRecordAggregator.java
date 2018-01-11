@@ -3,6 +3,7 @@ package org.bverify.aggregators;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.accounts.Account;
 import org.bverify.records.Deposit;
 import org.bverify.records.Transfer;
@@ -18,6 +19,8 @@ public class TestRecordAggregator {
 	public static Account alice = new Account("Alice", 1);
 	public static Account bob = new Account("Bob", 2);
 	public static Account charlie = new Account("Charlie", 3);
+	
+	public static String goodCorn = "CORN";
 	
 	public static MessageDigest md;
 	
@@ -44,11 +47,11 @@ public class TestRecordAggregator {
 	public void testAggDeposit() {
 		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		
-		Deposit deposit = new Deposit("CORN", 100, alice, charlie);
+		Deposit deposit = new Deposit(goodCorn, 100, alice, charlie);
 		RecordAggregation recordagg = aggregator.aggVal(deposit);
 		
 		md.reset();
-		md.update(deposit.toString().getBytes());
+		md.update(SerializationUtils.serialize(deposit));
 		byte[] correctHash = md.digest();
 		
 		Assert.assertArrayEquals(correctHash, recordagg.getHash());
@@ -60,11 +63,11 @@ public class TestRecordAggregator {
 	public void testAggWithdrawl() {
 		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		
-		Withdrawal withdrawal = new Withdrawal("CORN", 50, alice, charlie);
+		Withdrawal withdrawal = new Withdrawal(goodCorn, 50, alice, charlie);
 		RecordAggregation recordagg = aggregator.aggVal(withdrawal);
 		
 		md.reset();
-		md.update(withdrawal.toString().getBytes());
+		md.update(SerializationUtils.serialize(withdrawal));
 		byte[] correctHash = md.digest();
 		
 		Assert.assertArrayEquals(correctHash, recordagg.getHash());
@@ -76,11 +79,11 @@ public class TestRecordAggregator {
 	public void testAggTransfer() {
 		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		
-		Transfer transfer = new Transfer("CORN", 50, alice, charlie);
+		Transfer transfer = new Transfer(goodCorn, 50, alice, charlie);
 		RecordAggregation recordagg = aggregator.aggVal(transfer);
 		
 		md.reset();
-		md.update(transfer.toString().getBytes());
+		md.update(SerializationUtils.serialize(transfer));
 		byte[] correctHash = md.digest();
 		
 		Assert.assertArrayEquals(correctHash, recordagg.getHash());
@@ -92,10 +95,10 @@ public class TestRecordAggregator {
 	public void testMultipleDepositAgg() {
 		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		
-		Deposit dep1 = new Deposit("CORN", 50, alice, bob);
-		Deposit dep2 = new Deposit("CORN", 25, alice, charlie);
-		Deposit dep3 = new Deposit("CORN", 1, alice, bob);
-		Deposit dep4 = new Deposit("CORN", 24, alice, bob);
+		Deposit dep1 = new Deposit(goodCorn, 50, alice, bob);
+		Deposit dep2 = new Deposit(goodCorn, 25, alice, charlie);
+		Deposit dep3 = new Deposit(goodCorn, 1, alice, bob);
+		Deposit dep4 = new Deposit(goodCorn, 24, alice, bob);
 		
 
 		RecordAggregation recordagg = aggregator.aggChildren(
@@ -113,13 +116,13 @@ public class TestRecordAggregator {
 
 		
 		md.reset();
-		md.update(dep1.toString().getBytes());
+		md.update(SerializationUtils.serialize(dep1));
 		byte[] hash1 = md.digest();
-		md.update(dep2.toString().getBytes());
+		md.update(SerializationUtils.serialize(dep2));
 		byte[] hash2 = md.digest();
-		md.update(dep3.toString().getBytes());
+		md.update(SerializationUtils.serialize(dep3));
 		byte[] hash3 = md.digest();
-		md.update(dep4.toString().getBytes());
+		md.update(SerializationUtils.serialize(dep4));
 		byte[] hash4 = md.digest();
 		md.update(Ints.toByteArray(75));
 		md.update(Ints.toByteArray(75));
@@ -155,10 +158,10 @@ public class TestRecordAggregator {
 	public void testMultipleAggMixed() {
 CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		
-		Deposit rec1 = new Deposit("CORN", 100, alice, bob);
-		Withdrawal rec2 = new Withdrawal("CORN", 25, alice, charlie);
-		Transfer rec3 = new Transfer("CORN", 1, alice, bob);
-		Transfer rec4 = new Transfer("CORN", 24, alice, bob);
+		Deposit rec1 = new Deposit(goodCorn, 100, alice, bob);
+		Withdrawal rec2 = new Withdrawal(goodCorn, 25, alice, charlie);
+		Transfer rec3 = new Transfer(goodCorn, 1, alice, bob);
+		Transfer rec4 = new Transfer(goodCorn, 24, alice, bob);
 		
 
 		RecordAggregation recordaggL = aggregator.aggChildren(
@@ -174,10 +177,10 @@ CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		Assert.assertEquals(75, recordaggL.getNetAmount());
 		Assert.assertEquals(150, recordaggL.getTotalAmount());
 				
-		Withdrawal rec5 = new Withdrawal("CORN", 25, alice, bob);
-		Transfer rec6 = new Transfer("CORN", 1, bob, alice);
-		Withdrawal rec7 = new Withdrawal("CORN", 10, charlie, bob);
-		Withdrawal rec8 = new Withdrawal("CORN", 15, alice, charlie);
+		Withdrawal rec5 = new Withdrawal(goodCorn, 25, alice, bob);
+		Transfer rec6 = new Transfer(goodCorn, 1, bob, alice);
+		Withdrawal rec7 = new Withdrawal(goodCorn, 10, charlie, bob);
+		Withdrawal rec8 = new Withdrawal(goodCorn, 15, alice, charlie);
 		
 
 		RecordAggregation recordaggR = aggregator.aggChildren(
@@ -197,13 +200,13 @@ CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		
 		md.reset();
 		// left subtree
-		md.update(rec1.toString().getBytes());
+		md.update(SerializationUtils.serialize(rec1));
 		byte[] hash1 = md.digest();
-		md.update(rec2.toString().getBytes());
+		md.update(SerializationUtils.serialize(rec2));
 		byte[] hash2 = md.digest();
-		md.update(rec3.toString().getBytes());
+		md.update(SerializationUtils.serialize(rec3));
 		byte[] hash3 = md.digest();
-		md.update(rec4.toString().getBytes());
+		md.update(SerializationUtils.serialize(rec4));
 		byte[] hash4 = md.digest();
 		md.update(Ints.toByteArray(125));
 		md.update(Ints.toByteArray(75));
@@ -223,13 +226,13 @@ CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		Assert.assertArrayEquals(aggtreel, 	recordaggL.getHash());
 
 		// right subtree
-		md.update(rec5.toString().getBytes());
+		md.update(SerializationUtils.serialize(rec5));
 		byte[] hash5 = md.digest();
-		md.update(rec6.toString().getBytes());
+		md.update(SerializationUtils.serialize(rec6));
 		byte[] hash6 = md.digest();
-		md.update(rec7.toString().getBytes());
+		md.update(SerializationUtils.serialize(rec7));
 		byte[] hash7 = md.digest();
-		md.update(rec8.toString().getBytes());
+		md.update(SerializationUtils.serialize(rec8));
 		byte[] hash8 = md.digest();
 		md.update(Ints.toByteArray(26));
 		md.update(Ints.toByteArray(-25));
@@ -259,6 +262,31 @@ CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		Assert.assertEquals(25, combinedrecordagg.getNetAmount());
 		Assert.assertArrayEquals(finalHash, 	combinedrecordagg.getHash());
 
+	}
+	
+	@Test
+	public void testRecordAggregationSerializationSingleRecord() {
+		Deposit record = new Deposit(goodCorn, 101, alice, bob);
+		RecordAggregation recordagg = new RecordAggregation(record);
+		
+		byte[] recordaggbytes = SerializationUtils.serialize(recordagg);
+		RecordAggregation recordaggFromBytes = SerializationUtils.deserialize(recordaggbytes);
+		
+		Assert.assertEquals(recordagg, recordaggFromBytes);
+	}
+	
+	@Test
+	public void testRecordAggregationSerilizationMultiple() {
+		Deposit recordA = new Deposit(goodCorn, 101, alice, bob);
+		Withdrawal recordB = new Withdrawal(goodCorn, 10, alice, charlie);
+		RecordAggregation recordaggA = new RecordAggregation(recordA);
+		RecordAggregation recordaggB = new RecordAggregation(recordB);
+		RecordAggregation recordcombined = new RecordAggregation(recordaggA, recordaggB);	
+		
+		byte[] recordaggbytes = SerializationUtils.serialize(recordcombined);
+		RecordAggregation recordaggFromBytes = SerializationUtils.deserialize(recordaggbytes);
+		
+		Assert.assertEquals(recordcombined, recordaggFromBytes);
 	}
 	
 	
