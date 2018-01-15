@@ -2,7 +2,9 @@ package org.bverify.bverify;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -33,76 +35,35 @@ import edu.rice.historytree.storage.ArrayStore;
 
 /**
  * Main entry point for <b>bverify</b>
- * To be redone.
  */
 public class App 
 {
+	
+	
     public static void main( String[] args ) throws Exception
     {
-
-    		/*
-		AggregationInterface<byte[],byte[]> aggobj = new SHA256AggB64();
-		ArrayStore<byte[], byte[]> store = new ArrayStore<byte[],byte[]>();
-		
-		HistoryTree<byte[],byte[]> tree = new HistoryTree<byte[], byte[]>(aggobj,store);
-		tree.append("somedata".getBytes());
-		tree.append("moredata".getBytes());
-		tree.append("evenmoredata".getBytes());
-		tree.append("xxxxxxxxx".getBytes());
-        //System.out.println(tree.toString());
-        //System.out.println(tree.agg());
-         */
-   
         
-        ObjectInputStream oosAlice = new ObjectInputStream(new FileInputStream("/home/henryaspegren/Documents/DCI_CODE/bverify/saved_objects/alice"));
-        Account alice = (Account) oosAlice.readObject();
-        oosAlice.close();
+ 
+        ObjectInputStream oosDeposit = new ObjectInputStream(new FileInputStream("/home/henryaspegren/Documents/DCI_CODE/bverify/saved_objects/deposit"));
+        Deposit exampleDeposit = (Deposit) oosDeposit.readObject();
+        oosDeposit.close();
         
-        ObjectInputStream oosBob = new ObjectInputStream(new FileInputStream("/home/henryaspegren/Documents/DCI_CODE/bverify/saved_objects/bob"));
-        Account bob  = (Account) oosBob.readObject();
-        oosBob.close();
-        	
+        ObjectInputStream oosWithdrawal = new ObjectInputStream(new FileInputStream("/home/henryaspegren/Documents/DCI_CODE/bverify/saved_objects/withdrawal"));
+        Withdrawal exampleWithdrawal = (Withdrawal) oosWithdrawal.readObject();
+        oosWithdrawal.close();
         
-        Deposit exampleDeposit = new Deposit("CORN", 100, alice, bob);
-        exampleDeposit.signRecipient();
-        exampleDeposit.signEmployee();
+        ObjectInputStream oosTransfer = new ObjectInputStream(new FileInputStream("/home/henryaspegren/Documents/DCI_CODE/bverify/saved_objects/transfer"));
+        Transfer exampleTransfer = (Transfer) oosTransfer.readObject();
+        oosTransfer.close();
+              
         
-        Withdrawal exampleWithdrawal = new Withdrawal("CORN", -50, alice, bob);
-        exampleWithdrawal.signRecipient();
-        exampleWithdrawal.signEmployee();
-        
-        Transfer exampleTransfer = new Transfer("CORN", 50, alice, bob);
-        exampleTransfer.signRecipient();
-        exampleTransfer.signSender();
-        
-        // make a hist tree of these - with special aggregation method
-        CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
-		ArrayStore<RecordAggregation, Record> store = new ArrayStore<RecordAggregation,Record>();    
+        /*
 		
-		HistoryTree<RecordAggregation, Record> histtree = new HistoryTree<RecordAggregation, Record>(aggregator, store);
-		
-		histtree.append(exampleDeposit);
-		histtree.append(exampleDeposit);
-		histtree.append(exampleDeposit);
-		histtree.append(exampleDeposit);
-		histtree.append(exampleDeposit);
-		histtree.append(exampleTransfer);
-		histtree.append(exampleWithdrawal);
-	
-		
-		RecordAggregation agg = histtree.agg();
-		byte[] hashForCatena = agg.getHash();
-		
-		histtree.serializeTree();
-		
-		
-		
-		/**
 		NetworkParameters regtest  = RegTestParams.get();
 		
-		String hextxid = "8fe004f11f736a0156a457cc18e90e632b267ccd2d224f4c02a9621a0ae7a254";
-		String hexChainAddr = "mpnDfLUFKStTmsiqPricEB9xKL7eH7fKrZ";
-		String secretKey = "cPM8zZD2g6eVCyHjYj1H6xj45WQoooAPPZjHPtry1WDdjKoJXL1s";
+		String hextxid = "92f367157dcbaa9d3a3abeba9fefb26170b88c5e26f70c5e8759a1c4408324f0";
+		String hexChainAddr = "mxDEti9pgXA4xp5YwdFKG8BWsm3keDjqrW";
+		String secretKey = "cW49kgcB5ri1VTYBKVZyMh3HPMnSFqNGMMNEqgisUT74LXCd5UAW";
 		String directoryNameClient = "/home/henryaspegren/Documents/DCI_CODE/bverify/client";
 		String directoryNameServer = "/home/henryaspegren/Documents/DCI_CODE/bverify/server";
 		
@@ -113,52 +74,50 @@ public class App
 
 		File directoryClient = new File(directoryNameClient);
 		File directoryServer = new File(directoryNameServer);
-				
-	
-		CatenaServer catenaServer = new CatenaServer(regtest,
-				directoryServer, chainKey, txid);
 		
+		*/
+	
+		/*
+		CatenaServer catenaServer = new CatenaServer(regtest, directoryServer,
+				chainKey, txid);
 		catenaServer.connectToLocalHost();
 		catenaServer.startAsync();
 		catenaServer.awaitRunning();
-
-		Transaction txn = catenaServer.appendStatement(hashForCatena);
-        CatenaUtils.generateBlockRegtest();
-
-        Transaction prevTx = CatenaUtils.getPrevCatenaTx(catenaServer.getCatenaWallet(), txn.getHash());
-
-        System.out.printf("Created tx '%s' with statement '%s' (prev tx is '%s')\n", txn.getHash(),
-        		hashForCatena.toString(), prevTx.getHash());
-	
+		
+		BVerifyServer bverify = new BVerifyServer(catenaServer);
+		bverify.addRecord(exampleDeposit); 			// 0 
+		bverify.addRecord(exampleDeposit);			// 1
+		bverify.addRecord(exampleTransfer);			// 2
+		// 											-----
+		bverify.addRecord(exampleDeposit);			// 3
+		bverify.addRecord(exampleDeposit);			// 4
+		bverify.addRecord(exampleWithdrawal); 		// 5
+		// 											-----
+		bverify.addRecord(exampleWithdrawal);		// 6
+		bverify.addRecord(exampleDeposit); 			// 7
+		bverify.addRecord(exampleTransfer); 		// 8
+		//											-----
+		bverify.addRecord(exampleTransfer); 		// 9
+		bverify.addRecord(exampleTransfer); 		// 10
+		*/
 
 		
 		
+        /*
+         
 		CatenaClient catenaClient = new CatenaClient(regtest, 
 				directoryClient, txid, chainAddr, null);
 		
 		catenaClient.connectToLocalHost();
 		catenaClient.startAsync();
 		catenaClient.awaitRunning();
+				
+		BVerifyClient bverify = new BVerifyClient(catenaClient);
 		
-		ClientWallet wallet = catenaClient.getCatenaWallet();
+		bverify.loadStatements();
+	
+	
 		
-		Iterator<CatenaStatement> it = wallet.statementIterator(true);
-
-		int c = 1; 
-		while(it.hasNext()) {
-			CatenaStatement s = it.next();
-            Transaction prevTx = CatenaUtils.getPrevCatenaTx(wallet, s.getTxHash());
-            System.out.printf("Statement #%d: %s (tx %s, prev %s)\n", c, s.getAsString(), s.getTxHash(), prevTx.getHash());
-            if(c == 4) {
-            	boolean matches = Arrays.equals(hashForCatena, s.getData());
-            	System.out.println(new String(s.getData()));
-            	System.out.println(new String(hashForCatena));
-            	System.out.printf("Matches previous has %b", matches);
-            }
-            
-            c = c +1;
-        
-		}
 		*/
 	
 		

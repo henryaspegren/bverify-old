@@ -67,6 +67,7 @@ public class CryptographicRecordAggregator implements AggregationInterface<Recor
 		return ByteString.copyFrom(byteRep);
 	}
 
+
 	public RecordAggregation parseAgg(ByteString b) {
 		RecordAggregation recordAgg = (RecordAggregation) SerializationUtils.deserialize(b.toByteArray());
 		return recordAgg;

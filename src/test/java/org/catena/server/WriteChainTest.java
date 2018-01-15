@@ -32,8 +32,12 @@ public class WriteChainTest extends ClientServerTest
     private static final Logger log = LoggerFactory.getLogger(WriteChainTest.class);
     private static final int NUM_STATEMENTS = 5;
     
+    
     /**
      * Kills the bitcoinj Catena service.
+     * 
+     * TODO: is this really necessary -> seems like setup and teardown 
+     * handled in ClientServerTest @author{henryaspegren}
      */
     @After
     public void tearDown()

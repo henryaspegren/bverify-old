@@ -122,7 +122,7 @@ public abstract class BitcoindRegtestTest extends SummarizedTest
     }
     
     /**
-     * Adds funds to a privat key and returns it.
+     * Adds funds to a private key and returns it.
      * 
      * @return
      * @throws InterruptedException
