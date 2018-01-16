@@ -137,6 +137,39 @@ public class BVerifyServer {
 		System.out.println(this.histtree.toString());
 	}
 	
+	/**
+	 * This method modifies an existing record in log and recalculates 
+	 * the aggregations, but does not change any previous commitments.
+	 * NOTE THAT THIS METHOD IS FOR TESTING PURPOSES ONLY -- 
+	 * modification of a record in the log 
+	 * will result in the inconsistency being detected and rejected by 
+	 * BVerifyClients 
+	 * 
+	 * @param recordNumber - the record to be replaced, indexed from 1
+	 * @param newRecord - the new record to be put in its place
+	 */
+	public void changeRecord(int recordNumber, Record newRecord) {
+        CryptographicRecordAggregator newAggregator = new CryptographicRecordAggregator();
+		ArrayStore<RecordAggregation, Record> newStore = new ArrayStore<RecordAggregation,Record>();    
+		HistoryTree<RecordAggregation, Record> newHisttree = new HistoryTree<RecordAggregation, Record>(newAggregator, newStore);
+		// this algorithm recomputes the entire tree, rather than just the necessary hashes, 
+		// but since for testing use only this is not a big problem
+		for(int i = 0; i <= this.histtree.version(); i++) {
+			Record r;
+			if( i == (recordNumber-1)) {
+				r = newRecord;
+			}
+			else {
+				r = this.histtree.leaf(i).getVal();	
+			}	
+			newHisttree.append(r);
+		}
+		this.aggregator = newAggregator;
+		this.store = newStore;
+		this.histtree = newHisttree;
+
+	}
+	
 	
 	
 }

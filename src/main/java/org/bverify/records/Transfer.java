@@ -16,9 +16,9 @@ import com.google.common.primitives.Longs;
 public class Transfer implements Record {
 
 	private static final long serialVersionUID = 1L;
-	private final Date dateCreated;
+	private Date dateCreated;
 	private final String goodType;
-	private final int amount;
+	private int amount;
 	private final Account sender;
 	private final Account recepient;
 	
@@ -121,6 +121,19 @@ public class Transfer implements Record {
 		return this.dateCreated;
 	}
 	
+	public Account getSender() {
+		return this.sender;
+	}
+	
+	public Account getRecepient() {
+		return this.recepient;
+	}
+	
+	@Override
+	public void setDateCreated(Date date) {
+		this.dateCreated = date;
+	}
+	
 	public byte[] getSignedPortion(){
 		byte[] recordType = "TRANSFER".getBytes();
 		byte[] goodType = this.goodType.getBytes();
@@ -191,5 +204,6 @@ public class Transfer implements Record {
 		}
 		return false;
 	}
+	
 
 }

@@ -59,4 +59,9 @@ public interface Record extends Serializable {
 	public Date dateCreated();
 	
 	
+	/**
+	 * Set the date of creation of a record.
+	 * @param date - the date of creation
+	 */
+	public void setDateCreated(Date date);
 }

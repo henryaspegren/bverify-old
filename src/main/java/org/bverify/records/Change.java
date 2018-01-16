@@ -12,9 +12,9 @@ import org.bverify.accounts.Account;
 public abstract class Change implements Record {
 
 	private static final long serialVersionUID = 1L;
-	protected final Date dateCreated;
+	protected Date dateCreated;
 	protected final String goodType;
-	protected final int amount;
+	protected int amount;
 	protected final Account recepient;
 	protected final Account employee;
 	
@@ -127,6 +127,10 @@ public abstract class Change implements Record {
 		return this.dateCreated;
 	}
 	
+	@Override 
+	public void setDateCreated(Date date) {
+		this.dateCreated = date;
+	}
 	
 
 }

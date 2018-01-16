@@ -15,6 +15,7 @@ public class Withdrawal extends Change {
 	public Withdrawal(String goodType, int amount, Account recepient, Account employee) {
 		super(goodType, amount, recepient, employee);
 	}
+	
 
 	@Override
 	public int getTotalAmount() {
