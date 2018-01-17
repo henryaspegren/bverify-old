@@ -20,8 +20,8 @@
     <dependency>
       <groupId>fastsig</groupId>
       <artifactId>fastsig</artifactId>
-       <version>0.0.1-SNAPSHOT</version>
-	</dependency>  
+      <version>0.0.1-SNAPSHOT</version>
+     </dependency>  
 	<!-- https://mvnrepository.com/artifact/junit/junit -->
 	<dependency>
 	    <groupId>junit</groupId>

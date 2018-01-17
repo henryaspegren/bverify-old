@@ -21,7 +21,6 @@ public class BVerifyClient {
 	private BVerifyServer bverifyserver;
 	
 	private int total_records;
-	private int verified_records;
 	
 	private ArrayList<byte[]> commitmentHashes;
 	private ArrayList<Boolean> verifiedCommitmentHashes;
@@ -33,7 +32,6 @@ public class BVerifyClient {
 		this.bitcoinTxReader = client;
 		this.bverifyserver = bverifyserver;
 		this.total_records = 0;
-		this.verified_records = 0;
 		this.commitmentHashes = new ArrayList<byte[]>();
 		this.verifiedCommitmentHashes = new ArrayList<Boolean>();
 		// must have at least one commitment 
@@ -61,16 +59,22 @@ public class BVerifyClient {
 	
 	public void verifyConsistency() throws ProofError {
 		assert this.commitmentHashes.size() == this.verifiedCommitmentHashes.size();
+		// if there are no outstanding unverified commitments 
+		// then we don't have anything to check
+		if(this.commitmentHashes.size() == this.currentCommitmentNumber) {
+			return;
+		}
+		
 		int endIndex = this.commitmentHashes.size();
 		int startIndex;
-		// if only one commitment then nothing to compare it to 
-		// (for now, may implement some sort of version / statement as first commit)
 		if(this.currentCommitmentNumber == 1) {
-			startIndex = 1;
+			startIndex = this.currentCommitmentNumber;
 		}
 		else {
 			startIndex = this.currentCommitmentNumber - 1;
 		}
+
+		
 		HistoryTree<RecordAggregation, Record> proof = this.bverifyserver.constructConsistencyProof(
 				startIndex, endIndex);	
 
@@ -78,6 +82,7 @@ public class BVerifyClient {
 				commitmentNumber++) {
 			int commitmentNumberIdx = commitmentNumber-1;
 			int versionNumber = this.bverifyserver.commitmentNumberToVersionNumber(commitmentNumber);
+			this.total_records = versionNumber+1;
 			RecordAggregation agg = proof.aggV(versionNumber);
 			byte[] recordHash = agg.getHash();
 			byte[] commitmentHash = this.commitmentHashes.get(commitmentNumberIdx);
@@ -97,6 +102,28 @@ public class BVerifyClient {
 	
 	public int currentCommitment() {
 		return this.currentCommitmentNumber;
+	}
+	
+	public int getTotalRecord() {
+		return this.total_records;
+	}
+	
+	
+	public Record getAndVerifyRecord(int recordNumber) throws ProofError {
+		HistoryTree<RecordAggregation, Record> proofTree = 
+				this.bverifyserver.constructRecordProof(recordNumber);
+		Record record = proofTree.leaf(recordNumber-1).getVal();
+		int lastCommittedVersion = this.bverifyserver.commitmentNumberToVersionNumber(
+				this.currentCommitmentNumber);
+		RecordAggregation agg = proofTree.aggV(lastCommittedVersion);
+		byte[] treeHash = agg.getHash();
+		byte[] latestCommitmentHash = this.commitmentHashes.get(this.currentCommitmentNumber-1);
+		boolean matches = Arrays.equals(treeHash, latestCommitmentHash);
+		if(!matches) {
+			throw new ProofError("This Record is Inconsistent And Has Been Modified or Reordered");
+		}
+		return record;
+		
 	}
 
 }

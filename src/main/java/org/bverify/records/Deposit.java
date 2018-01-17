@@ -85,7 +85,7 @@ public class Deposit extends Change {
 	@Override
 	public String toString() {
 		StringBuilder stringRep = new StringBuilder();
-		stringRep.append("DEPSOIT");
+		stringRep.append("DEPOSIT");
 		stringRep.append(System.getProperty("line.separator"));
 		stringRep.append("Recepient: ");
 		stringRep.append(this.recepient.getName());

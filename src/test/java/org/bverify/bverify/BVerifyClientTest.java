@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.concurrent.Semaphore;
 
 import org.bitcoinj.core.InsufficientMoneyException;
+import org.bverify.records.Record;
 import org.bverify.records.RecordUtils;
 import org.bverify.records.Transfer;
 import org.junit.Assert;
@@ -13,6 +14,62 @@ import edu.rice.historytree.ProofError;
 
 public class BVerifyClientTest extends BVerifyClientServerTest {
 	
+	
+	@Test
+	public void testRecordProofSuccess() {
+		try {
+			BVerifyServer bverifyserver = new BVerifyServer(this.catenaServer);
+	        Semaphore semAppended = new Semaphore(0);
+	        this.createSemaphoredCatenaClient(this.txid, semAppended, null);
+			BVerifyClient bverifyclient = new BVerifyClient(this.catenaClient, bverifyserver);
+			// add three records to get a commitment 
+			bverifyserver.addRecord(deposit);
+			bverifyserver.addRecord(withdrawal);
+			bverifyserver.addRecord(transfer);
+			waitForBlock();
+	        waitForStatements(1, semAppended);
+	        bverifyclient.loadStatements();
+	        bverifyclient.verifyConsistency();
+	        Record record = bverifyclient.getAndVerifyRecord(2);
+	        Assert.assertEquals(withdrawal, record);
+	        
+		}catch(InsufficientMoneyException | IOException | InterruptedException | ProofError e){
+			e.printStackTrace();
+			Assert.fail();
+		}
+	}
+	
+	@Test
+	public void testDetectTamperedRecordProof() {
+		try {
+			BVerifyServer bverifyserver = new BVerifyServer(this.catenaServer);
+	        Semaphore semAppended = new Semaphore(0);
+	        this.createSemaphoredCatenaClient(this.txid, semAppended, null);
+			BVerifyClient bverifyclient = new BVerifyClient(this.catenaClient, bverifyserver);
+			// add three records to get a commitment 
+			bverifyserver.addRecord(deposit);
+			bverifyserver.addRecord(withdrawal);
+			bverifyserver.addRecord(transfer);
+			waitForBlock();
+	        waitForStatements(1, semAppended);
+	        
+	        bverifyclient.loadStatements();
+	        bverifyclient.verifyConsistency();
+	        
+	        // modify the record on the server
+	        Record modifiedRecord = RecordUtils.modifyDepositAmount(deposit, 123456789);
+	        bverifyserver.changeRecord(2, modifiedRecord);
+	        
+	        Record record = bverifyclient.getAndVerifyRecord(2);
+	        Assert.assertNotEquals(deposit, record);
+	        Assert.fail("Invalid Record Not Caught!");
+	        
+		}catch(ProofError e){
+			e.printStackTrace();
+		}catch(InsufficientMoneyException | IOException | InterruptedException e) {
+			
+		}
+	}
 	
 	@Test
 	public void testConsistencyProofSuccess(){

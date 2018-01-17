@@ -23,8 +23,16 @@ public class BVerifyServer {
 	private ArrayStore<RecordAggregation, Record> store;
 	private HistoryTree<RecordAggregation, Record> histtree;
 	
+	/**
+	 * Total records are the number of records -- committed 
+	 * and uncommitted -- stored by Bverify
+	 */
 	private int total_records;
-	private int committed_records;
+	/**
+	 * Committed records are records for which a commitment transaction
+	 * has been issued on the Blockchain
+	 */
+	private int total_committed_records;
 	private int numberOfCommitments;
 	
 	// TODO:  optimize this using an indexing scheme
@@ -36,7 +44,7 @@ public class BVerifyServer {
     private static final Logger log = LoggerFactory.getLogger(BVerifyServer.class);
 	
 	/**
-	 * Commit a set of records to the blockchain by
+	 * Commit a set of records to the Blockchain by
 	 * publishing a commitment hash when a total of 
 	 * COMMIT_INTERVAL records are outstanding. 
 	 * This is a parameter that we can optimize
@@ -50,7 +58,7 @@ public class BVerifyServer {
 		this.store = new ArrayStore<RecordAggregation,Record>();    
 		this.histtree = new HistoryTree<RecordAggregation, Record>(aggregator, store);
 		this.total_records = 0;
-		this.committed_records = 0;
+		this.total_committed_records = 0;
 		this.numberOfCommitments = 0;
 		this.commitmentHashToVersion = new HashMap<ByteBuffer, Integer>();
 		this.commitmentHashToCommitmentNumber = new HashMap<ByteBuffer, Integer>();
@@ -63,7 +71,7 @@ public class BVerifyServer {
 		synchronized(this) {
 			this.histtree.append(r);
 			this.total_records++;
-			int outstanding_records = total_records - committed_records;
+			int outstanding_records = total_records - total_committed_records;
 			
 			assert outstanding_records <= BVerifyServer.COMMIT_INTERVAL;
 					
@@ -79,16 +87,15 @@ public class BVerifyServer {
 				this.commitmentHashToVersion.put(ByteBuffer.wrap(hashAgg), currentVersion);
 				this.commitmentHashToCommitmentNumber.put(ByteBuffer.wrap(hashAgg),this.numberOfCommitments);
 				this.commitmentNumberToVersionNumber.put(this.numberOfCommitments, currentVersion);
-				this.committed_records = this.total_records;
+				this.total_committed_records = this.total_records;
 			}		
 		}
 	}
 	
-	
-	public HistoryTree<RecordAggregation, Record> constructConsistencyProof(byte[] oldHash,
-			byte[] newHash) throws ProofError{
-		return this.constructConsistencyProof(commitmentHashToCommitmentNumber(oldHash), 
-				commitmentHashToCommitmentNumber(newHash));
+	public byte[] getCommitment(int commitmentNumber) {
+		int version = this.commitmentNumberToVersionNumber(commitmentNumber);
+		RecordAggregation agg = this.histtree.aggV(version);
+		return agg.getHash();
 	}
 	
 	public HistoryTree<RecordAggregation, Record> constructConsistencyProof(int startingCommitNumber, int endingCommitNumber) 
@@ -105,6 +112,24 @@ public class BVerifyServer {
 			proofTree.copyV(histtree, versionNumber, false);
 		}
 		
+		return proofTree;
+	}
+	
+	public HistoryTree<RecordAggregation, Record> constructRecordProof(int recordNumber) throws ProofError {
+		if(this.total_committed_records < recordNumber) {
+			throw new ProofError(String.format("Record #{} has not been commited yet. So far only commited {} Records", 
+					recordNumber, this.total_committed_records));
+		}
+		int versionNumber = this.recordNumberToVersionNumber(recordNumber);
+		int versionLastCommit = this.commitmentNumberToVersionNumber(this.numberOfCommitments);
+		ArrayStore<RecordAggregation, Record> newdatastore = new ArrayStore<RecordAggregation, Record>();
+		// TODO: This proof is needless large - 
+		// 		currently I can only make pruned trees from the current version which
+		//		means that we need to potentially copy an Extra Merkle path to reproduce the
+		// 		last committed version.
+		HistoryTree<RecordAggregation, Record> proofTree = this.histtree.makePruned(newdatastore);
+		proofTree.copyV(this.histtree, versionLastCommit, false);
+		proofTree.copyV(this.histtree, versionNumber, true);
 		return proofTree;
 	}
 	
@@ -130,7 +155,7 @@ public class BVerifyServer {
 	}
 	
 	public int getTotalNumberOfCommittedRecords() {
-		return this.committed_records;
+		return this.total_committed_records;
 	}
 	
 	public void printTree() {
@@ -168,6 +193,10 @@ public class BVerifyServer {
 		this.store = newStore;
 		this.histtree = newHisttree;
 
+	}
+	
+	private int recordNumberToVersionNumber(int recordNumber) {
+		return recordNumber-1;
 	}
 	
 	

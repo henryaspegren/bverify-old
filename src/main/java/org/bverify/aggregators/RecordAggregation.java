@@ -16,7 +16,7 @@ import com.google.common.primitives.Ints;
  *  
  *  Here is the recursion:
  *  
- *  	BASE CASES(records)
+ *  BASE CASES(records)
  * 		Deposit(amount): netAmount: amount, totalAmount: amount, 
  * 		Transfer(amount): netAmount: 0, totalAmount: amount
  * 		Withdrawal(amount): netAmount: -1*amount, totalAmount: amount

@@ -7,7 +7,6 @@ import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
 import org.bverify.records.Record;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
 import edu.rice.historytree.HistoryTree;
@@ -16,12 +15,43 @@ import edu.rice.historytree.storage.ArrayStore;
 
 public class BVerifyServerTest extends BVerifyClientServerTest {
 	
-	public static BVerifyServer bverifyserver;
 	
-
-	@Before
-    public void getReady() {
+	@Test
+	public void testServerRecordProof() {
 		try {
+			BVerifyServer bverifyserver = new BVerifyServer(catenaServer);
+		    bverifyserver.addRecord(deposit); 				// 0
+		    bverifyserver.addRecord(deposit);				// 1
+		    bverifyserver.addRecord(transfer);				// 2
+			// 											-----
+		    bverifyserver.addRecord(deposit);				// 3
+		    bverifyserver.addRecord(deposit);				// 4
+			bverifyserver.addRecord(withdrawal); 			// 5
+			// 											-----
+			bverifyserver.addRecord(withdrawal);			// 6
+			bverifyserver.addRecord(deposit); 				// 7
+			bverifyserver.addRecord(transfer); 				// 8
+			// 											-----
+			bverifyserver.addRecord(transfer); 				// 9
+			bverifyserver.addRecord(transfer); 				// 10
+			
+			HistoryTree<RecordAggregation, Record> proofTree = bverifyserver.constructRecordProof(4);
+			Assert.assertEquals(deposit, proofTree.leaf(3).getVal()); 
+			RecordAggregation agg = proofTree.aggV(8);
+			Assert.assertTrue(Arrays.equals(bverifyserver.getCommitment(3), agg.getHash()));
+			
+		}catch(InsufficientMoneyException | ProofError e) {
+			e.printStackTrace();
+			Assert.fail();
+		}
+	}
+
+	
+	@Test
+	public void testServerCommitments(){
+		try {
+			BVerifyServer bverifyserver;
+			
 		    bverifyserver = new BVerifyServer(catenaServer);
 		    bverifyserver.addRecord(deposit); 				// 0 
 		    bverifyserver.addRecord(deposit);				// 1
@@ -37,15 +67,6 @@ public class BVerifyServerTest extends BVerifyClientServerTest {
 			// 											-----
 			bverifyserver.addRecord(transfer); 				// 9
 			bverifyserver.addRecord(transfer); 				// 10
-		}catch(InsufficientMoneyException e) {
-			Assert.fail();
-		}
-		
-	};
-	
-	@Test
-	public void testServerCommitments(){
-		try {
 			
 	        CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 			ArrayStore<RecordAggregation, Record> store = new ArrayStore<RecordAggregation,Record>();    
@@ -82,7 +103,7 @@ public class BVerifyServerTest extends BVerifyClientServerTest {
 			Assert.assertTrue(Arrays.equals(hashCommitTwo, proof.aggV(5).getHash()));
 			Assert.assertTrue(Arrays.equals(hashCommitThree, proof.aggV(8).getHash()));			
 			
-		}catch(ProofError e) {
+		}catch(ProofError | InsufficientMoneyException e) {
 			e.printStackTrace();
 			Assert.fail();
 		}
