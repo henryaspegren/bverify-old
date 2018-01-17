@@ -108,11 +108,18 @@ public class BVerifyClient {
 		return this.total_records;
 	}
 	
-	
+	/**
+	 * Requests for a specific record from the server along with a proof 
+	 * that this record is authentic. 
+	 * @param recordNumber - The record number (= version) in [0, 1, ... , (1 << this.current_commitment) -1]
+	 * @return Record - The required record
+	 * @throws ProofError - Throws a ProofError if the Record provided by the server is not authentic 
+	 * 						/ if the proof is incorrect.
+	 */
 	public Record getAndVerifyRecord(int recordNumber) throws ProofError {
 		HistoryTree<RecordAggregation, Record> proofTree = 
 				this.bverifyserver.constructRecordProof(recordNumber);
-		Record record = proofTree.leaf(recordNumber-1).getVal();
+		Record record = proofTree.leaf(recordNumber).getVal();
 		int lastCommittedVersion = this.bverifyserver.commitmentNumberToVersionNumber(
 				this.currentCommitmentNumber);
 		RecordAggregation agg = proofTree.aggV(lastCommittedVersion);

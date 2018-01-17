@@ -23,14 +23,15 @@ public class BVerifyClientTest extends BVerifyClientServerTest {
 	        this.createSemaphoredCatenaClient(this.txid, semAppended, null);
 			BVerifyClient bverifyclient = new BVerifyClient(this.catenaClient, bverifyserver);
 			// add three records to get a commitment 
-			bverifyserver.addRecord(deposit);
-			bverifyserver.addRecord(withdrawal);
-			bverifyserver.addRecord(transfer);
+			bverifyserver.addRecord(deposit);		// 0 
+			bverifyserver.addRecord(withdrawal);	// 1
+			bverifyserver.addRecord(transfer);		// 2
+			//										------
 			waitForBlock();
 	        waitForStatements(1, semAppended);
 	        bverifyclient.loadStatements();
 	        bverifyclient.verifyConsistency();
-	        Record record = bverifyclient.getAndVerifyRecord(2);
+	        Record record = bverifyclient.getAndVerifyRecord(1);
 	        Assert.assertEquals(withdrawal, record);
 	        
 		}catch(InsufficientMoneyException | IOException | InterruptedException | ProofError e){
@@ -46,21 +47,20 @@ public class BVerifyClientTest extends BVerifyClientServerTest {
 	        Semaphore semAppended = new Semaphore(0);
 	        this.createSemaphoredCatenaClient(this.txid, semAppended, null);
 			BVerifyClient bverifyclient = new BVerifyClient(this.catenaClient, bverifyserver);
-			// add three records to get a commitment 
-			bverifyserver.addRecord(deposit);
-			bverifyserver.addRecord(withdrawal);
-			bverifyserver.addRecord(transfer);
+			bverifyserver.addRecord(deposit);		// 0 
+			bverifyserver.addRecord(withdrawal);	// 1
+			bverifyserver.addRecord(transfer);		// 2
+			//										------
 			waitForBlock();
 	        waitForStatements(1, semAppended);
-	        
 	        bverifyclient.loadStatements();
 	        bverifyclient.verifyConsistency();
 	        
 	        // modify the record on the server
 	        Record modifiedRecord = RecordUtils.modifyDepositAmount(deposit, 123456789);
-	        bverifyserver.changeRecord(2, modifiedRecord);
+	        bverifyserver.changeRecord(1, modifiedRecord);
 	        
-	        Record record = bverifyclient.getAndVerifyRecord(2);
+	        Record record = bverifyclient.getAndVerifyRecord(1);
 	        Assert.assertNotEquals(deposit, record);
 	        Assert.fail("Invalid Record Not Caught!");
 	        

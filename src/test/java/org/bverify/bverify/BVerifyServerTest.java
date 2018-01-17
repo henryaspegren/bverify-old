@@ -36,7 +36,7 @@ public class BVerifyServerTest extends BVerifyClientServerTest {
 			bverifyserver.addRecord(transfer); 				// 10
 			
 			HistoryTree<RecordAggregation, Record> proofTree = bverifyserver.constructRecordProof(4);
-			Assert.assertEquals(deposit, proofTree.leaf(3).getVal()); 
+			Assert.assertEquals(deposit, proofTree.leaf(4).getVal()); 
 			RecordAggregation agg = proofTree.aggV(8);
 			Assert.assertTrue(Arrays.equals(bverifyserver.getCommitment(3), agg.getHash()));
 			

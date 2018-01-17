@@ -116,11 +116,11 @@ public class BVerifyServer {
 	}
 	
 	public HistoryTree<RecordAggregation, Record> constructRecordProof(int recordNumber) throws ProofError {
-		if(this.total_committed_records < recordNumber) {
-			throw new ProofError(String.format("Record #{} has not been commited yet. So far only commited {} Records", 
-					recordNumber, this.total_committed_records));
+		if(this.total_committed_records <= recordNumber) {
+			throw new ProofError(String.format("Record #{} has not been commited yet. So far only commited up to "
+					+ "Record #{}", 
+					recordNumber, this.total_committed_records-1));
 		}
-		int versionNumber = this.recordNumberToVersionNumber(recordNumber);
 		int versionLastCommit = this.commitmentNumberToVersionNumber(this.numberOfCommitments);
 		ArrayStore<RecordAggregation, Record> newdatastore = new ArrayStore<RecordAggregation, Record>();
 		// TODO: This proof is needless large - 
@@ -129,7 +129,7 @@ public class BVerifyServer {
 		// 		last committed version.
 		HistoryTree<RecordAggregation, Record> proofTree = this.histtree.makePruned(newdatastore);
 		proofTree.copyV(this.histtree, versionLastCommit, false);
-		proofTree.copyV(this.histtree, versionNumber, true);
+		proofTree.copyV(this.histtree, recordNumber, true);
 		return proofTree;
 	}
 	
@@ -170,7 +170,7 @@ public class BVerifyServer {
 	 * will result in the inconsistency being detected and rejected by 
 	 * BVerifyClients 
 	 * 
-	 * @param recordNumber - the record to be replaced, indexed from 1
+	 * @param recordNumber - the record to be replaced in [0, 1, ..., total_records-1]
 	 * @param newRecord - the new record to be put in its place
 	 */
 	public void changeRecord(int recordNumber, Record newRecord) {
@@ -181,7 +181,7 @@ public class BVerifyServer {
 		// but since for testing use only this is not a big problem
 		for(int i = 0; i <= this.histtree.version(); i++) {
 			Record r;
-			if( i == (recordNumber-1)) {
+			if( i == (recordNumber)) {
 				r = newRecord;
 			}
 			else {
@@ -194,11 +194,4 @@ public class BVerifyServer {
 		this.histtree = newHisttree;
 
 	}
-	
-	private int recordNumberToVersionNumber(int recordNumber) {
-		return recordNumber-1;
-	}
-	
-	
-	
 }
