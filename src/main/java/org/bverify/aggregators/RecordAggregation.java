@@ -89,6 +89,20 @@ public class RecordAggregation implements Serializable {
 	}
 	
 	/**
+	 * FOR TESTING PURPOSES ONLY
+	 * - Creates a record with the desired parameters. This can be used
+	 * to create inconsistent records {@link #modifyRecordAggregation(RecordAggregation, int, int)}
+	 * @param totalAmount
+	 * @param netAmount
+	 * @param hash
+	 */
+	public RecordAggregation(int totalAmount, int netAmount, byte[] hash) {
+		this.totalAmount = totalAmount;
+		this.netAmount = netAmount;
+		this.hash = hash;
+	}
+	
+	/**
 	 * Creates a record aggregation from two other record aggregations.
 	 * For now just does a very simple aggregation of adding amounts of records.
 	 * 						agg
@@ -160,6 +174,7 @@ public class RecordAggregation implements Serializable {
 		return this.hash;
 	}
 	
+	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Total Amnt: ");
@@ -190,4 +205,17 @@ public class RecordAggregation implements Serializable {
 		return false;
 	}
 
+	/**
+	 * FOR TESTING PURPOSES ONLY - Used copy a record aggregation 
+	 * but modify the totals - can create an invalid record
+	 * @param prevAgg
+	 * @param newTotal
+	 * @param newNet
+	 * @return
+	 */
+	public static RecordAggregation modifyRecordAggregation(RecordAggregation prevAgg,
+			int newTotal, int newNet) {
+		return new RecordAggregation(newTotal, newNet, prevAgg.getHash());
+	}
+	
 }

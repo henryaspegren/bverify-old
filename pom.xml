@@ -14,13 +14,11 @@
     <maven.compiler.source>1.9</maven.compiler.source>
     <maven.compiler.target>1.9</maven.compiler.target>
   </properties>
-
-
   <dependencies>
     <dependency>
       <groupId>fastsig</groupId>
       <artifactId>fastsig</artifactId>
-      <version>0.0.1-SNAPSHOT</version>
+      <version>1</version>
      </dependency>  
 	<!-- https://mvnrepository.com/artifact/junit/junit -->
 	<dependency>
@@ -47,14 +45,11 @@
 	    <artifactId>protobuf-java</artifactId>
 	    <version>3.5.1</version>
 	</dependency>
-
-
 	<dependency>
  		<groupId>org.apache.commons</groupId>
   		<artifactId>commons-lang3</artifactId>
   		<version>3.7</version>
 	</dependency>
-
     <dependency>
       <groupId>org.bitcoinj</groupId>
       <artifactId>bitcoinj-core</artifactId>
@@ -76,8 +71,6 @@
 	    <artifactId>slf4j-api</artifactId>
 	    <version>1.7.25</version>
 	</dependency>
-
-    
   </dependencies>
   <version>2.0</version>
 </project>

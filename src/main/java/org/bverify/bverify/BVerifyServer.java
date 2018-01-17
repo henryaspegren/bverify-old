@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import edu.rice.historytree.HistoryTree;
+import edu.rice.historytree.AggWithChildren;
 import edu.rice.historytree.ProofError;
 import edu.rice.historytree.storage.ArrayStore;
 
@@ -53,10 +54,10 @@ public class BVerifyServer {
 	
 	
 	public BVerifyServer(CatenaServer srvr) {
-		this.bitcoinTxPublisher = srvr;
         this.aggregator = new CryptographicRecordAggregator();
 		this.store = new ArrayStore<RecordAggregation,Record>();    
 		this.histtree = new HistoryTree<RecordAggregation, Record>(aggregator, store);
+		this.bitcoinTxPublisher = srvr;
 		this.total_records = 0;
 		this.total_committed_records = 0;
 		this.numberOfCommitments = 0;
@@ -133,13 +134,24 @@ public class BVerifyServer {
 		return proofTree;
 	}
 	
+	/**
+	 * Construct a proof of the aggregation corresponding to the 
+	 * input commit number 
+	 * @param commitNumber - The commitment number (1 indexed) to construct an aggregation 
+	 * proof for
+	 * @return Returns the aggregation along with the pre-image (children) from which the 
+	 * hash can be recalculated and verified 
+	 */
+	public AggWithChildren<RecordAggregation> constructAggregationProof(int commitNumber) {
+		int versionNumber = this.commitmentNumberToVersionNumber(commitNumber);
+		AggWithChildren<RecordAggregation> aggProof = this.histtree.aggVWithChildren(versionNumber);
+		return aggProof;
+		
+	}
+	
 	
 	public int commitmentHashToVersion(byte[] commitHash) {
 		return this.commitmentHashToVersion.get(ByteBuffer.wrap(commitHash));
-	}
-	
-	private int commitmentHashToCommitmentNumber(byte[] commitHash) {
-		return this.commitmentHashToCommitmentNumber.get(ByteBuffer.wrap(commitHash));
 	}
 	
 	public int commitmentNumberToVersionNumber(int commitNumber) {
@@ -194,4 +206,5 @@ public class BVerifyServer {
 		this.histtree = newHisttree;
 
 	}
+		
 }

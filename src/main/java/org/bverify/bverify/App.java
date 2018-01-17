@@ -1,37 +1,11 @@
 package org.bverify.bverify;
 
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.util.Arrays;
-import java.util.Iterator;
 
-import org.bitcoinj.core.Address;
-import org.bitcoinj.core.DumpedPrivateKey;
-import org.bitcoinj.core.ECKey;
-import org.bitcoinj.core.NetworkParameters;
-import org.bitcoinj.core.Sha256Hash;
-import org.bitcoinj.core.Transaction;
-import org.bitcoinj.params.RegTestParams;
-import org.bverify.accounts.Account;
-import org.bverify.aggregators.CryptographicRecordAggregator;
-import org.bverify.aggregators.RecordAggregation;
 import org.bverify.records.Deposit;
-import org.bverify.records.Record;
 import org.bverify.records.Transfer;
 import org.bverify.records.Withdrawal;
-import org.catena.client.CatenaClient;
-import org.catena.client.ClientApp;
-import org.catena.client.ClientWallet;
-import org.catena.common.CatenaApp;
-import org.catena.common.CatenaStatement;
-import org.catena.common.CatenaUtils;
-import org.catena.server.CatenaServer;
-
-import edu.rice.historytree.HistoryTree;
-import edu.rice.historytree.storage.ArrayStore;
 
 /**
  * Main entry point for <b>bverify</b>

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
 import org.bverify.records.Record;
 import org.catena.client.CatenaClient;
@@ -11,6 +12,7 @@ import org.catena.common.CatenaStatement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import edu.rice.historytree.AggWithChildren;
 import edu.rice.historytree.HistoryTree;
 import edu.rice.historytree.ProofError;
 
@@ -26,6 +28,8 @@ public class BVerifyClient {
 	private ArrayList<Boolean> verifiedCommitmentHashes;
 	private int currentCommitmentNumber;
 	
+	private CryptographicRecordAggregator aggregator;
+	
 	private static final Logger log = LoggerFactory.getLogger(BVerifyClient.class);
 	
 	public BVerifyClient(CatenaClient client, BVerifyServer bverifyserver) {
@@ -36,6 +40,7 @@ public class BVerifyClient {
 		this.verifiedCommitmentHashes = new ArrayList<Boolean>();
 		// must have at least one commitment 
 		this.currentCommitmentNumber = 1;
+		this.aggregator = new CryptographicRecordAggregator();
 	}
 	
 	public void loadStatements() {
@@ -132,5 +137,73 @@ public class BVerifyClient {
 		return record;
 		
 	}
+	
+	public RecordAggregation getAndCheckAggregation(int commitmentNumber) throws ProofError {
+		AggWithChildren<RecordAggregation> aggProof = 
+				this.bverifyserver.constructAggregationProof(commitmentNumber);
+		boolean proofCorrect = this.checkRecordAggregationProof(aggProof, commitmentNumber);
+		if(!proofCorrect) {
+			throw new ProofError("This Record Aggregation Is Invalid");
+		}
+		return aggProof.getMain();
+
+	}
+	
+	
+	public boolean checkRecordAggregationProof(AggWithChildren<RecordAggregation> aggProof, int commitmentNumber) {
+		RecordAggregation unverifiedRecordAgg = aggProof.getMain();
+		RecordAggregation left = aggProof.getLeft();
+		RecordAggregation right = aggProof.getRight();
+				
+		// STEP 1 - verify record hash is correctly calculated 
+		
+		// this recalculates the hash value on the client 
+		RecordAggregation correctRecordAgg = this.aggregator.aggChildren(left, right);
+		// .... and if the record is authentic then it will match what the
+		// 		server gave to use (the equality checks that the hashes match)
+		boolean hashCalculatedCorrectly = correctRecordAgg.equals(unverifiedRecordAgg);
+		if(!hashCalculatedCorrectly) {
+			return false;
+		}
+		assert Arrays.equals(correctRecordAgg.getHash(), unverifiedRecordAgg.getHash());
+		
+		// STEP 2 - check that record hash matches the latest commitment 
+		int commitNumberIndx = commitmentNumber-1;
+		byte[] latestCommitmentHash = this.commitmentHashes.get(commitNumberIndx);
+		byte[] recordAggHash = correctRecordAgg.getHash();
+		boolean hashMatchesCommitment = Arrays.equals(latestCommitmentHash, recordAggHash);
+		
+		return hashMatchesCommitment;
+		
+	}
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
