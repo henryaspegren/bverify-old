@@ -1,56 +1,47 @@
 package org.bverify.bverify;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 
-import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
+import org.bverify.proofs.AggregationProof;
+import org.bverify.proofs.ConsistencyProof;
+import org.bverify.proofs.RecordProof;
 import org.bverify.records.Record;
 import org.catena.client.CatenaClient;
 import org.catena.common.CatenaStatement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import edu.rice.historytree.AggWithChildren;
-import edu.rice.historytree.HistoryTree;
 import edu.rice.historytree.ProofError;
 
 public class BVerifyClient {
 	
-	
 	private CatenaClient  bitcoinTxReader; 
 	private BVerifyServer bverifyserver;
-	
-	private int total_records;
-	
+		
 	private ArrayList<byte[]> commitmentHashes;
 	private ArrayList<Boolean> verifiedCommitmentHashes;
 	private int currentCommitmentNumber;
-	
-	private CryptographicRecordAggregator aggregator;
-	
+		
 	private static final Logger log = LoggerFactory.getLogger(BVerifyClient.class);
 	
 	public BVerifyClient(CatenaClient client, BVerifyServer bverifyserver) {
 		this.bitcoinTxReader = client;
 		this.bverifyserver = bverifyserver;
-		this.total_records = 0;
 		this.commitmentHashes = new ArrayList<byte[]>();
 		this.verifiedCommitmentHashes = new ArrayList<Boolean>();
-		// must have at least one commitment 
-		this.currentCommitmentNumber = 1;
-		this.aggregator = new CryptographicRecordAggregator();
+		this.currentCommitmentNumber = -1;
 	}
 	
 	public void loadStatements() {
 		Iterator<CatenaStatement> reader = 
 				this.bitcoinTxReader.getCatenaWallet().statementIterator(true);
-		
-		int commitmentNumber = 1;
+		// commitment numbers are zero indexed
+		int commitmentNumber = 0;
 		while(reader.hasNext()) {
 			CatenaStatement st = reader.next();
-			if(commitmentNumber > this.commitmentHashes.size()) {
+			if(commitmentNumber >= this.getTotalCommitments()) {
 				this.commitmentHashes.add(st.getData());
 				this.verifiedCommitmentHashes.add(false);
 				String statementString = new String(st.getData());
@@ -58,49 +49,45 @@ public class BVerifyClient {
 			}
 			commitmentNumber++;
 		}
-		log.info("TOTAL OF {} BVERIFY COMMITMENTS FOUND", this.commitmentHashes.size());;
+		log.info("TOTAL OF {} BVERIFY COMMITMENTS FOUND", this.getTotalCommitments());;
 
 	}
 	
 	public void verifyConsistency() throws ProofError {
 		assert this.commitmentHashes.size() == this.verifiedCommitmentHashes.size();
-		// if there are no outstanding unverified commitments 
-		// then we don't have anything to check
-		if(this.commitmentHashes.size() == this.currentCommitmentNumber) {
+		// if there are no outstanding unverified commitments or there are no 
+		// commitments period than we don't have anything to check
+		if(this.commitmentHashes.size() == (this.currentCommitmentNumber+1) 
+				|| this.commitmentHashes.size() == 0) {
 			return;
 		}
-		
-		int endIndex = this.commitmentHashes.size();
+		int endIndex = this.commitmentHashes.size()-1;
 		int startIndex;
-		if(this.currentCommitmentNumber == 1) {
-			startIndex = this.currentCommitmentNumber;
+		// first commitment
+		if(this.currentCommitmentNumber == -1) {
+			startIndex = 0;
 		}
 		else {
-			startIndex = this.currentCommitmentNumber - 1;
+			// otherwise we need to start at current commitment
+			startIndex = this.currentCommitmentNumber;
 		}
-
-		
-		HistoryTree<RecordAggregation, Record> proof = this.bverifyserver.constructConsistencyProof(
+		ConsistencyProof proof = this.bverifyserver.constructConsistencyProof(
 				startIndex, endIndex);	
-
-		for(int commitmentNumber = startIndex; commitmentNumber <= endIndex; 
-				commitmentNumber++) {
-			int commitmentNumberIdx = commitmentNumber-1;
-			int versionNumber = this.bverifyserver.commitmentNumberToVersionNumber(commitmentNumber);
-			this.total_records = versionNumber+1;
-			RecordAggregation agg = proof.aggV(versionNumber);
-			byte[] recordHash = agg.getHash();
-			byte[] commitmentHash = this.commitmentHashes.get(commitmentNumberIdx);
-			boolean match = Arrays.equals(recordHash, commitmentHash);
-			this.verifiedCommitmentHashes.set(commitmentNumberIdx, match);
-			if(!match) {
-				throw new ProofError("Consistency Proof Invalid - Some Records Have Been Ommitted");
+		boolean proofCorrect = proof.checkProof(commitmentHashes.subList(startIndex, endIndex+1));
+		if(!proofCorrect) {
+			throw new ProofError("Consistency Proof Invalid - Some Records Have Been Ommitted");
+		}else {
+			// if consistency proof has been verified
+			for(int indx = startIndex; indx <= endIndex; indx++) {
+				// mark all the commitments as verified
+				this.verifiedCommitmentHashes.set(indx, true);
 			}
+			// update current commitment
+			this.currentCommitmentNumber = endIndex;
 		}
-		this.currentCommitmentNumber = endIndex;
 	}
 	
-	public int totalCommitments() {
+	public int getTotalCommitments() {
 		assert this.commitmentHashes.size() == this.verifiedCommitmentHashes.size();
 		return this.commitmentHashes.size();
 	}
@@ -109,9 +96,14 @@ public class BVerifyClient {
 		return this.currentCommitmentNumber;
 	}
 	
-	public int getTotalRecord() {
-		return this.total_records;
+	public byte[] getCommitment(int commitmentNumber) {
+		return this.commitmentHashes.get(commitmentNumber);
 	}
+	
+	public byte[] getCurrentCommitment() {
+		return this.getCommitment(this.currentCommitmentNumber);
+	}
+	
 	
 	/**
 	 * Requests for a specific record from the server along with a proof 
@@ -122,16 +114,16 @@ public class BVerifyClient {
 	 * 						/ if the proof is incorrect.
 	 */
 	public Record getAndVerifyRecord(int recordNumber) throws ProofError {
-		HistoryTree<RecordAggregation, Record> proofTree = 
+		RecordProof proof = 
 				this.bverifyserver.constructRecordProof(recordNumber);
-		Record record = proofTree.leaf(recordNumber).getVal();
-		int lastCommittedVersion = this.bverifyserver.commitmentNumberToVersionNumber(
-				this.currentCommitmentNumber);
-		RecordAggregation agg = proofTree.aggV(lastCommittedVersion);
-		byte[] treeHash = agg.getHash();
-		byte[] latestCommitmentHash = this.commitmentHashes.get(this.currentCommitmentNumber-1);
-		boolean matches = Arrays.equals(treeHash, latestCommitmentHash);
-		if(!matches) {
+		Record record = proof.getRecord();
+		
+		// look up the latest commitment hash 
+		byte[] latestCommitmentHash = this.getCommitment(this.currentCommitmentNumber);
+		
+		boolean valid = proof.checkProof(latestCommitmentHash);
+		
+		if(!valid) {
 			throw new ProofError("This Record is Inconsistent And Has Been Modified or Reordered");
 		}
 		return record;
@@ -139,43 +131,16 @@ public class BVerifyClient {
 	}
 	
 	public RecordAggregation getAndCheckAggregation(int commitmentNumber) throws ProofError {
-		AggWithChildren<RecordAggregation> aggProof = 
+		AggregationProof aggProof = 
 				this.bverifyserver.constructAggregationProof(commitmentNumber);
-		boolean proofCorrect = this.checkRecordAggregationProof(aggProof, commitmentNumber);
+		boolean proofCorrect =  aggProof.checkProof(getCommitment(commitmentNumber));
 		if(!proofCorrect) {
 			throw new ProofError("This Record Aggregation Is Invalid");
 		}
-		return aggProof.getMain();
+		return aggProof.getAggregation();
 
 	}
 	
-	
-	public boolean checkRecordAggregationProof(AggWithChildren<RecordAggregation> aggProof, int commitmentNumber) {
-		RecordAggregation unverifiedRecordAgg = aggProof.getMain();
-		RecordAggregation left = aggProof.getLeft();
-		RecordAggregation right = aggProof.getRight();
-				
-		// STEP 1 - verify record hash is correctly calculated 
-		
-		// this recalculates the hash value on the client 
-		RecordAggregation correctRecordAgg = this.aggregator.aggChildren(left, right);
-		// .... and if the record is authentic then it will match what the
-		// 		server gave to use (the equality checks that the hashes match)
-		boolean hashCalculatedCorrectly = correctRecordAgg.equals(unverifiedRecordAgg);
-		if(!hashCalculatedCorrectly) {
-			return false;
-		}
-		assert Arrays.equals(correctRecordAgg.getHash(), unverifiedRecordAgg.getHash());
-		
-		// STEP 2 - check that record hash matches the latest commitment 
-		int commitNumberIndx = commitmentNumber-1;
-		byte[] latestCommitmentHash = this.commitmentHashes.get(commitNumberIndx);
-		byte[] recordAggHash = correctRecordAgg.getHash();
-		boolean hashMatchesCommitment = Arrays.equals(latestCommitmentHash, recordAggHash);
-		
-		return hashMatchesCommitment;
-		
-	}
 
 }
 

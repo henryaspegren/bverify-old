@@ -1,12 +1,17 @@
 package org.bverify.bverify;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
 import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
+import org.bverify.proofs.AggregationProof;
+import org.bverify.proofs.ConsistencyProof;
+import org.bverify.proofs.RecordProof;
 import org.bverify.records.Record;
 import org.catena.server.CatenaServer;
 import org.slf4j.Logger;
@@ -17,6 +22,15 @@ import edu.rice.historytree.AggWithChildren;
 import edu.rice.historytree.ProofError;
 import edu.rice.historytree.storage.ArrayStore;
 
+/**
+ * 
+ * Records are indexed [0, ... , totalRecords - 1] 
+ * Commitments are indexed [0, ..., totalCommitments - 1]
+ * 
+ * 
+ * @author henryaspegren
+ *
+ */
 public class BVerifyServer {
 
 	private transient CatenaServer bitcoinTxPublisher;
@@ -28,13 +42,13 @@ public class BVerifyServer {
 	 * Total records are the number of records -- committed 
 	 * and uncommitted -- stored by Bverify
 	 */
-	private int total_records;
+	private int totalRecords;
 	/**
 	 * Committed records are records for which a commitment transaction
 	 * has been issued on the Blockchain
 	 */
-	private int total_committed_records;
-	private int numberOfCommitments;
+	private int totalCommittedRecords;
+	private int totalCommitments;
 	
 	// TODO:  optimize this using an indexing scheme
 	// and reduce redundancy 
@@ -58,9 +72,9 @@ public class BVerifyServer {
 		this.store = new ArrayStore<RecordAggregation,Record>();    
 		this.histtree = new HistoryTree<RecordAggregation, Record>(aggregator, store);
 		this.bitcoinTxPublisher = srvr;
-		this.total_records = 0;
-		this.total_committed_records = 0;
-		this.numberOfCommitments = 0;
+		this.totalRecords = 0;
+		this.totalCommittedRecords = 0;
+		this.totalCommitments = 0;
 		this.commitmentHashToVersion = new HashMap<ByteBuffer, Integer>();
 		this.commitmentHashToCommitmentNumber = new HashMap<ByteBuffer, Integer>();
 		this.commitmentNumberToVersionNumber = new HashMap<Integer, Integer>();
@@ -68,11 +82,12 @@ public class BVerifyServer {
 	
 	
 	public void addRecord(Record r) throws InsufficientMoneyException {
-		// TODO: should use multi-reader, single writer log 
+		// TODO: should use multi-reader, single writer lock
+		// 		this can allow lots of parallelization for generating proofs!!!
 		synchronized(this) {
 			this.histtree.append(r);
-			this.total_records++;
-			int outstanding_records = total_records - total_committed_records;
+			this.totalRecords++;
+			int outstanding_records = totalRecords - totalCommittedRecords;
 			
 			assert outstanding_records <= BVerifyServer.COMMIT_INTERVAL;
 					
@@ -81,57 +96,51 @@ public class BVerifyServer {
 				byte[] hashAgg = currentAgg.getHash();
 				Transaction tx = this.bitcoinTxPublisher.appendStatement(hashAgg);
 				BVerifyServer.log.info("Committing BVerify log with {} records to blockchain in txn {}",
-						this.total_records, tx.getHashAsString());
-				
+						this.totalRecords, tx.getHashAsString());
 				int currentVersion = this.histtree.version();
-				this.numberOfCommitments++;
+				this.totalCommitments++;
+				// commitments are zero indexed
+				int currentCommitmentNumber =  this.getTotalNumberOfCommitments()-1;
 				this.commitmentHashToVersion.put(ByteBuffer.wrap(hashAgg), currentVersion);
-				this.commitmentHashToCommitmentNumber.put(ByteBuffer.wrap(hashAgg),this.numberOfCommitments);
-				this.commitmentNumberToVersionNumber.put(this.numberOfCommitments, currentVersion);
-				this.total_committed_records = this.total_records;
+				this.commitmentHashToCommitmentNumber.put(ByteBuffer.wrap(hashAgg), currentCommitmentNumber);
+				this.commitmentNumberToVersionNumber.put(currentCommitmentNumber, currentVersion);
+				this.totalCommittedRecords = this.totalRecords;
 			}		
 		}
 	}
 	
 	public byte[] getCommitment(int commitmentNumber) {
-		int version = this.commitmentNumberToVersionNumber(commitmentNumber);
+		int version = this.commitmentNumberToRecordNumber(commitmentNumber);
 		RecordAggregation agg = this.histtree.aggV(version);
 		return agg.getHash();
 	}
 	
-	public HistoryTree<RecordAggregation, Record> constructConsistencyProof(int startingCommitNumber, int endingCommitNumber) 
+	public byte[] getCurrentCommitment() {
+		int currentCommitmentNumber = this.getTotalNumberOfCommitments()-1;
+		return this.getCommitment(currentCommitmentNumber);
+	}
+
+	public ConsistencyProof constructConsistencyProof(int startingCommitNumber, int endingCommitNumber) 
 			throws ProofError{
-		ArrayStore<RecordAggregation, Record> newdatastore = new ArrayStore<RecordAggregation, Record>();
-		
-		// TODO: method in this library needs to be rewritten
-		HistoryTree<RecordAggregation, Record> proofTree = this.histtree.makePruned(newdatastore);
-		
-		// This will allow us to compute the 
-		// required aggregations and prove consistency
-		for(int commitNumber = startingCommitNumber; commitNumber <= endingCommitNumber; commitNumber++) {
-			int versionNumber = this.commitmentNumberToVersionNumber(commitNumber);
-			proofTree.copyV(histtree, versionNumber, false);
+		List<Integer> cmtRecordNumbers = new ArrayList<>();
+		for(int cmtNumber = startingCommitNumber; cmtNumber <= endingCommitNumber; cmtNumber++) {
+			int cmtRecordNumber = this.commitmentNumberToRecordNumber(cmtNumber);
+			cmtRecordNumbers.add(cmtRecordNumber);
 		}
-		
-		return proofTree;
+		ConsistencyProof proof = new ConsistencyProof(startingCommitNumber, cmtRecordNumbers, this.histtree);
+		return proof;
 	}
 	
-	public HistoryTree<RecordAggregation, Record> constructRecordProof(int recordNumber) throws ProofError {
-		if(this.total_committed_records <= recordNumber) {
+	public RecordProof constructRecordProof(int recordNumber) throws ProofError {
+		int currentCommitmentNumber = this.totalCommitments-1;
+		if(this.totalCommittedRecords <= recordNumber) {
 			throw new ProofError(String.format("Record #{} has not been commited yet. So far only commited up to "
 					+ "Record #{}", 
-					recordNumber, this.total_committed_records-1));
+					recordNumber, this.getTotalNumberOfCommitments()-1));
 		}
-		int versionLastCommit = this.commitmentNumberToVersionNumber(this.numberOfCommitments);
-		ArrayStore<RecordAggregation, Record> newdatastore = new ArrayStore<RecordAggregation, Record>();
-		// TODO: This proof is needless large - 
-		// 		currently I can only make pruned trees from the current version which
-		//		means that we need to potentially copy an Extra Merkle path to reproduce the
-		// 		last committed version.
-		HistoryTree<RecordAggregation, Record> proofTree = this.histtree.makePruned(newdatastore);
-		proofTree.copyV(this.histtree, versionLastCommit, false);
-		proofTree.copyV(this.histtree, recordNumber, true);
-		return proofTree;
+		int versionLastCommit = this.commitmentNumberToRecordNumber(this.getTotalNumberOfCommitments()-1);
+		RecordProof proof = new RecordProof(recordNumber, currentCommitmentNumber, versionLastCommit, this.histtree);
+		return proof;
 	}
 	
 	/**
@@ -142,32 +151,34 @@ public class BVerifyServer {
 	 * @return Returns the aggregation along with the pre-image (children) from which the 
 	 * hash can be recalculated and verified 
 	 */
-	public AggWithChildren<RecordAggregation> constructAggregationProof(int commitNumber) {
-		int versionNumber = this.commitmentNumberToVersionNumber(commitNumber);
-		AggWithChildren<RecordAggregation> aggProof = this.histtree.aggVWithChildren(versionNumber);
+	public AggregationProof constructAggregationProof(int commitNumber) {
+		int versionNumber = this.commitmentNumberToRecordNumber(commitNumber);
+		AggWithChildren<RecordAggregation> aggPlusChildren = this.histtree.aggVWithChildren(versionNumber);
+		AggregationProof aggProof = new AggregationProof(aggPlusChildren.getMain(),
+				aggPlusChildren.getLeft().getHash(), aggPlusChildren.getRight().getHash(),
+				commitNumber);
 		return aggProof;
 		
 	}
-	
 	
 	public int commitmentHashToVersion(byte[] commitHash) {
 		return this.commitmentHashToVersion.get(ByteBuffer.wrap(commitHash));
 	}
 	
-	public int commitmentNumberToVersionNumber(int commitNumber) {
+	public int commitmentNumberToRecordNumber(int commitNumber) {
 		return this.commitmentNumberToVersionNumber.get(commitNumber);
 	}
 		
 	public int getTotalNumberOfCommitments() {
-		return this.numberOfCommitments;
+		return this.totalCommitments;
 	}
 	
 	public int getTotalNumberOfRecords() {
-		return this.total_records;
+		return this.totalRecords;
 	}
 	
 	public int getTotalNumberOfCommittedRecords() {
-		return this.total_committed_records;
+		return this.totalCommittedRecords;
 	}
 	
 	public void printTree() {

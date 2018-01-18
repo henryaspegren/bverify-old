@@ -139,26 +139,10 @@ public class RecordAggregation implements Serializable {
 		
 		this.totalAmount = leftTotal + rightTotal;
 		this.netAmount = leftNet + rightNet;
-		
-		byte[] hashRes; 
-		try {
-			/**
-			 * NOTE that the hash is computed over the hashes of the children
-			 * AND over the amount aggregation
-			 */
-			MessageDigest md = MessageDigest.getInstance("SHA-256");
-			md.update(Ints.toByteArray(this.totalAmount));
-			md.update(Ints.toByteArray(this.netAmount));
-			md.update(hashLeft);
-			md.update(hashRight);
-			hashRes = md.digest();
-			
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			hashRes = null;
-		}
-		this.hash = hashRes;
+
+		this.hash = RecordAggregation.calculateHash(this.totalAmount, this.netAmount,
+				hashLeft, hashRight);
+
 
 	}	
 	
@@ -203,6 +187,28 @@ public class RecordAggregation implements Serializable {
 			}
 		}
 		return false;
+	}
+	
+	
+	public static byte[] calculateHash(int totalAmount, int netAmount,
+			byte[] hashLeft, byte[] hashRight) {
+		try {
+			/**
+			 * NOTE that the hash is computed over the hashes of the children
+			 * AND over the amount aggregation
+			 */
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			md.update(Ints.toByteArray(totalAmount));
+			md.update(Ints.toByteArray(netAmount));
+			md.update(hashLeft);
+			md.update(hashRight);
+			byte[] hashRes = md.digest();
+			return hashRes;
+			
+		}catch(NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			throw new RuntimeException("FATAL BUG");
+		}
 	}
 
 	/**
