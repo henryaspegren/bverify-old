@@ -25,8 +25,10 @@ public class ConsistencyProof implements Proof {
 		this.cmtRecordNumbers = new ArrayList<Integer>();
 		ArrayStore<RecordAggregation, Record> store = new ArrayStore<RecordAggregation, Record>();
 		// make a pruned tree
-		this.proofTree = tree.makePruned(store);
-		
+		// around the last commitment version
+		int lastCmtRecordNumber = commitmentRecordNumbers.get(commitmentRecordNumbers.size()-1);
+		this.proofTree = tree.makePruned(store, lastCmtRecordNumber);
+	
 		// add in the required paths to reproduce the 
 		// previous commitments
 		// TODO: this is inefficient - adds a lot more 

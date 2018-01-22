@@ -23,18 +23,10 @@ public class RecordProof implements Proof {
 		this.commitmentRecordNumber = commitmentRecordNumber;
 		this.newdatastore = new ArrayStore<RecordAggregation, Record>();
 		
-		// Construct a proof by making a Merkle path to the record 
-		// TODO: this is inefficient because makePruned potentially 
-		//			adds an extra path! (always uses the tree.version, 
-		//			which adds uncommitted records). We need to write 
-		//			a new method to avoid this
-		this.proofTree = recordTree.makePruned(this.newdatastore);
-		
-		this.proofTree.copyV(recordTree, recordNumber, true);
-		
-		// this is currently required because we need to be able to reproduce the 
-		// current agg --- can be replaced in the future 
-		this.proofTree.copyV(recordTree, commitmentRecordNumber, false);	
+		// fixed - proof now is minimal and optimal, no extra paths
+		this.proofTree = recordTree.makePruned(this.newdatastore, commitmentRecordNumber);
+				
+		this.proofTree.copyV(recordTree, recordNumber, true);	
 	}
 	
 	public Record getRecord() {
