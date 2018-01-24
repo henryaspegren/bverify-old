@@ -10,7 +10,7 @@ import com.google.common.primitives.Longs;
 
 public class Withdrawal extends Change {
 
-	private static final long serialVersionUID = 2L;
+	private static final long serialVersionUID = 3L;
 
 	public Withdrawal(String goodType, int amount, Account recepient, Account employee) {
 		super(goodType, -1*amount, amount, recepient, employee);
@@ -20,8 +20,8 @@ public class Withdrawal extends Change {
 	public boolean isValid() {
 		// later can be made richer and possible depend on 
 		// current state, etc. 
-		if( this.getNumericalAttribute("netAmount") < 0 &&
-				this.getNumericalAttribute("totalAmount") > 0 && 
+		if( this.getNetChange()< 0 &&
+				this.getTotalAmount()> 0 && 
 				this.isSigned()) {
 			return true;
 		}
@@ -39,7 +39,7 @@ public class Withdrawal extends Change {
 		byte[] goodType = this.goodType.getBytes();
 		byte[] employeeid = Longs.toByteArray(this.employee.getId());
 		byte[] accountid = Longs.toByteArray(this.recepient.getId());
-		byte[] amount = Ints.toByteArray(this.getNumericalAttribute("totalAmount"));
+		byte[] amount = Ints.toByteArray(this.getTotalAmount());
 		byte[] date = this.dateCreated.toString().getBytes();
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
@@ -54,7 +54,6 @@ public class Withdrawal extends Change {
 			messageBytes = outputStream.toByteArray( );	
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			messageBytes = "ERROR!!!!".getBytes();
 		}
@@ -80,6 +79,7 @@ public class Withdrawal extends Change {
 			if(ar.dateCreated.equals(this.dateCreated) &&
 					ar.goodType.equals(this.goodType) &&
 					ar.numericalAttributes.equals(this.numericalAttributes) &&
+					ar.categoricalAttributes.equals(this.categoricalAttributes) &&
 					ar.recepient.equals(this.recepient) &&
 					ar.employee.equals(this.employee)
 					) {

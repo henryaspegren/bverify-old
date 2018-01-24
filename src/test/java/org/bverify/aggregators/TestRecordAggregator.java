@@ -8,7 +8,9 @@ import java.util.Map;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.accounts.Account;
+import org.bverify.records.CategoricalAttributes;
 import org.bverify.records.Deposit;
+import org.bverify.records.NumericalAttributes;
 import org.bverify.records.Record;
 import org.bverify.records.Transfer;
 import org.bverify.records.Withdrawal;
@@ -146,32 +148,34 @@ public class TestRecordAggregator extends TestCase {
 		byte[] hash3 = md.digest();
 		md.update(SerializationUtils.serialize(dep4));
 		byte[] hash4 = md.digest();
-		Map<String, Integer> mapl = new HashMap<String, Integer>();
-		mapl.put(Record.totalAmount, 75);
-		mapl.put(Record.netAmount, 75);
-		byte[] aggl = RecordAggregation.calculateHash(mapl, hash1, hash2, 
-				new BitSet(RecordAggregation.NUM_ATTRBUTES));
-		Map<String, Integer> mapr = new HashMap<String, Integer>();
-		mapr.put(Record.totalAmount, 25);
-		mapr.put(Record.netAmount, 25);
-		byte[] aggr = RecordAggregation.calculateHash(mapr, hash3, hash4, 
-				new BitSet(RecordAggregation.NUM_ATTRBUTES));
-		Map<String, Integer> mapfinal = new HashMap<String, Integer>();
-		mapfinal.put(Record.totalAmount, 100);
-		mapfinal.put(Record.netAmount, 100);
-		byte[] correctHash1 = RecordAggregation.calculateHash(mapfinal, aggl, aggr, 
-				new BitSet(RecordAggregation.NUM_ATTRBUTES));
+		NumericalAttributes numl = new NumericalAttributes();
+		numl.setAttribute(1, 75);
+		numl.setAttribute(0, 75);
+		byte[] aggl = RecordAggregation.calculateHash(numl, new CategoricalAttributes(),
+				hash1, hash2);
+		NumericalAttributes numr = new NumericalAttributes();
+		numr.setAttribute(1, 25);
+		numr.setAttribute(0, 25);
+		byte[] aggr = RecordAggregation.calculateHash(numr, new CategoricalAttributes(),
+				hash3, hash4);
+		
+		NumericalAttributes numfinal = new NumericalAttributes();
+		numfinal.setAttribute(1, 100);
+		numfinal.setAttribute(0, 100);
+
+		byte[] correctHash1 = RecordAggregation.calculateHash(numfinal,
+				new CategoricalAttributes(), aggl, aggr);
 		
 		Assert.assertArrayEquals(correctHash1, recordagg.getHash());
 
 		RecordAggregation recordagg2 = aggregator.aggChildren(recordagg, recordagg);
 		Assert.assertEquals(200, recordagg2.getTotalAmount());
 		Assert.assertEquals(200, recordagg2.getNetAmount());
-		Map<String, Integer> mapfinal2 = new HashMap<String, Integer>();
-		mapfinal2.put(Record.totalAmount, 200);
-		mapfinal2.put(Record.netAmount, 200);
-		byte[] correctHash2 = RecordAggregation.calculateHash(mapfinal2, correctHash1, correctHash1, 
-				new BitSet(RecordAggregation.NUM_ATTRBUTES));
+		NumericalAttributes mapfinal2 = new NumericalAttributes();
+		mapfinal2.setAttribute(0, 200);
+		mapfinal2.setAttribute(1, 200);
+		byte[] correctHash2 = RecordAggregation.calculateHash(mapfinal2, 
+				new CategoricalAttributes(), correctHash1, correctHash1);
 		Assert.assertArrayEquals(correctHash2, recordagg2.getHash());
 		
 	}

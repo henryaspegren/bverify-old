@@ -27,7 +27,8 @@ public class AggregationProof implements Proof {
 		// 			correctly reproduces the hash
 		byte[] hashRes = RecordAggregation.calculateHash(
 				this.mainAgg.getNumericalAttributes(), 
-				this.leftPreImageHash, this.rightPreImageHash, this.mainAgg.getCategoricalAttributes());
+				this.mainAgg.getCategoricalAttributes(),
+				this.leftPreImageHash, this.rightPreImageHash);
 		
 		boolean hashPreimageValid = Arrays.equals(hashRes, this.mainAgg.getHash());
 		

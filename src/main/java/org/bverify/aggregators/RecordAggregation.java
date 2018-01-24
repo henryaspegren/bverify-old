@@ -13,6 +13,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.bouncycastle.util.Arrays;
+import org.bverify.records.CategoricalAttributes;
+import org.bverify.records.NumericalAttributes;
 import org.bverify.records.Record;
 
 import com.google.common.primitives.Ints;
@@ -29,10 +31,11 @@ import com.google.common.primitives.Ints;
  * 
  * 	RECURSIVE CASE
  * 		Agg(RecordAggregation a, RecordAggregation b) : 
- * 			for each numerical attribute:
- * 					new numerical attribute = a.att
+ * 			for each numerical attribute att:
+ * 					new numerical attribute = a.att + b.att
  * 
  * 			new categorical attributes = a.attributes BITWISE OR b.attributes
+ * 			
  * 			hash = SHA-256(new numerical attributes || 
  * 							new categorical attributes || 
  * 											a.hash || b.hash )
@@ -44,23 +47,20 @@ import com.google.common.primitives.Ints;
 public class RecordAggregation implements Serializable {
 	
 	// version
-	private static final long serialVersionUID = 2L;
+	private static final long serialVersionUID = 3L;
 
 	// 32 bytes for SHA-256 hash
 	public static final byte[] NULL_HASH = new byte[32];
-	
-	// 64 attributes (64 bits)
-	public static final int NUM_ATTRBUTES = 64;
-	
+		
 	/**
 	 * Numerical Attributes
 	 */
-	private final Map<String, Integer> numericalAttributes;
+	private final NumericalAttributes numericalAttributes;
 	
 	/**
 	 * Categorical Attributes 
 	 */
-	private final BitSet categoricalAttributes;
+	private final CategoricalAttributes categoricalAttributes;
 	
 	/**
 	 * Summary Hash
@@ -73,10 +73,8 @@ public class RecordAggregation implements Serializable {
 	 */
 	public RecordAggregation() {
 		this.hash = RecordAggregation.NULL_HASH;
-		this.categoricalAttributes = new BitSet(RecordAggregation.NUM_ATTRBUTES);
-		this.numericalAttributes = new HashMap<String, Integer>();
-		this.numericalAttributes.put(Record.totalAmount, 0);
-		this.numericalAttributes.put(Record.netAmount, 0);
+		this.categoricalAttributes = new CategoricalAttributes();
+		this.numericalAttributes = new NumericalAttributes();
 	}
 	
 	/**
@@ -111,11 +109,11 @@ public class RecordAggregation implements Serializable {
 	 * @param hash
 	 */
 	public RecordAggregation(int totalAmount, int netAmount, byte[] hash) {
-		this.numericalAttributes = new HashMap<String, Integer>();
-		this.numericalAttributes.put(Record.totalAmount, totalAmount);
-		this.numericalAttributes.put(Record.netAmount, netAmount);
+		this.numericalAttributes = new NumericalAttributes();
+		this.numericalAttributes.setAttribute(0, totalAmount);
+		this.numericalAttributes.setAttribute(1, netAmount);
 		this.hash = hash;
-		this.categoricalAttributes = new BitSet(RecordAggregation.NUM_ATTRBUTES);
+		this.categoricalAttributes = new CategoricalAttributes();
 	}
 	
 	/**
@@ -129,66 +127,57 @@ public class RecordAggregation implements Serializable {
 	 * @param rightagg - the 'right' record aggregation, may be null
 	 */
 	public RecordAggregation(RecordAggregation leftagg, RecordAggregation rightagg) {
-		int leftTotal, leftNet, rightTotal, rightNet;
+		NumericalAttributes numericalLeft, numericalRight;
+		CategoricalAttributes categoricalLeft, categoricalRight;
 		byte[] hashLeft, hashRight;
-		BitSet attributesLeft, attributesRight;
 		
 		if(leftagg != null) {
-			leftTotal = leftagg.getTotalAmount();
-			leftNet = leftagg.getNetAmount();
+			numericalLeft = leftagg.getNumericalAttributes();
+			categoricalLeft = leftagg.getCategoricalAttributes();
 			hashLeft = leftagg.getHash();
-			attributesLeft = leftagg.getCategoricalAttributes();
 		}
 		else {
-			leftTotal = 0;
-			leftNet = 0;
+			numericalLeft = new NumericalAttributes();
+			categoricalLeft = new CategoricalAttributes();
 			hashLeft = RecordAggregation.NULL_HASH;
-			// this is a bit field of all zeros
-			attributesLeft = new BitSet(RecordAggregation.NUM_ATTRBUTES);
 		}
 		if(rightagg != null) {
-			rightTotal = rightagg.getTotalAmount();
-			rightNet = rightagg.getNetAmount();
+			numericalRight = rightagg.getNumericalAttributes();
+			categoricalRight = rightagg.getCategoricalAttributes();
 			hashRight = rightagg.getHash();
-			attributesRight = rightagg.getCategoricalAttributes();
 		}
 		else {
-			rightTotal = 0; 
-			rightNet = 0; 
+			numericalRight = new NumericalAttributes();
+			categoricalRight = new CategoricalAttributes();
 			hashRight = RecordAggregation.NULL_HASH;
-			// this is a bit field of all zeros
-			attributesRight = new BitSet(RecordAggregation.NUM_ATTRBUTES);
 		}
 		
-		this.numericalAttributes = new HashMap<String, Integer>();
-		this.numericalAttributes.put(Record.totalAmount, leftTotal + rightTotal);
-		this.numericalAttributes.put(Record.netAmount, leftNet + rightNet);
+		// ADD the numerical attributes 
+		this.numericalAttributes = numericalLeft.add(numericalRight);
 		
-		// OR the bit fields
-		attributesRight.or(attributesLeft);
-		// and make a copy
-		this.categoricalAttributes = (BitSet) attributesRight.clone();
+		// OR the categorical attributes
+		this.categoricalAttributes = categoricalLeft.or(categoricalRight);
 		
 		this.hash = RecordAggregation.calculateHash(this.numericalAttributes,
-				hashLeft, hashRight, this.categoricalAttributes);
+				this.categoricalAttributes, hashLeft, hashRight);
 
 
 	}	
 	
-	public BitSet getCategoricalAttributes() {
-		return (BitSet) this.categoricalAttributes.clone();
+	public CategoricalAttributes getCategoricalAttributes() {
+		return new CategoricalAttributes(this.categoricalAttributes);
 	}
 	
-	public Map<String, Integer> getNumericalAttributes(){
-		return new HashMap<String, Integer>(this.numericalAttributes);
+	public NumericalAttributes getNumericalAttributes(){
+		return new NumericalAttributes(this.numericalAttributes);
 	}
 	
 	public int getTotalAmount() {
-		return this.numericalAttributes.get(Record.totalAmount);
+		return this.numericalAttributes.getAttribute(0);
 	}
 	
 	public int getNetAmount() {
-		return this.numericalAttributes.get(Record.netAmount);
+		return this.numericalAttributes.getAttribute(1);
 	}
 	
 	public byte[] getHash() {
@@ -198,12 +187,9 @@ public class RecordAggregation implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("Total Amnt: ");
-		sb.append(this.getTotalAmount());
+		sb.append(this.categoricalAttributes);
 		sb.append(System.getProperty("line.separator"));
-		sb.append("Net Amnt: ");
-		sb.append(this.getNetAmount());
-		sb.append(System.getProperty("line.separator"));
+		sb.append(this.numericalAttributes);
 		sb.append("Hash: ");
 		try {
 			sb.append(new String(this.hash, "UTF-8"));
@@ -227,8 +213,9 @@ public class RecordAggregation implements Serializable {
 	}
 	
 	
-	public static byte[] calculateHash(Map<String, Integer> numericalAttributes,
-			byte[] hashLeft, byte[] hashRight, BitSet categoricalAttributes) {
+	public static byte[] calculateHash(NumericalAttributes numericalAttributes,
+			CategoricalAttributes categoricalAttributes,
+			byte[] hashLeft, byte[] hashRight) {
 		try {
 			/**
 			 * NOTE that the hash is computed over the hashes of the children
@@ -236,13 +223,8 @@ public class RecordAggregation implements Serializable {
 			 */
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
 			
-			// we sort the keys lexicographically 
-			List<String> sortedKeys = new ArrayList<String>(numericalAttributes.size());
-			sortedKeys.addAll(numericalAttributes.keySet());
-			Collections.sort(sortedKeys); 
-			
-			for(String key : sortedKeys) {
-				md.update(Ints.toByteArray(numericalAttributes.get(key)));
+			for(int i = 0; i < numericalAttributes.numberOfAttributes(); i ++) {
+				md.update(Ints.toByteArray(numericalAttributes.getAttribute(i)));
 			}
 
 			md.update(categoricalAttributes.toByteArray());

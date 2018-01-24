@@ -18,6 +18,15 @@ public class AggregationProofTest extends ProofTestBase {
 		
 		AggregationProof aggProof = new AggregationProof(mainAgg, leftAgg.getHash(), 
 				rightAgg.getHash(), 1);
+
+		
+		System.out.println(aggProof.getAggregation().
+				getNumericalAttributes().
+				equals(mainAgg.getNumericalAttributes()));
+		
+		System.out.println(aggProof.getAggregation().
+				getCategoricalAttributes().
+				equals(mainAgg.getCategoricalAttributes()));
 		
 		Assert.assertEquals(mainAgg, aggProof.getAggregation());
 		Assert.assertTrue(aggProof.checkProof(mainAgg.getHash()));		

@@ -9,9 +9,10 @@ import java.util.Map;
 /**
  * Interface for the records that <b>bverify</b> stores.
  * For now we model records as having 2 types of attributes:
- * 			- categorical attributes - booleans 
- * 			- numerical attributes 	 - integers
- * 
+ * 			<li> categorical attributes - booleans  </li>
+ * 			<li> numerical attributes - integers </li>
+ * See {@link org.bverify.records.NumericalAttributes} and 
+ * 		{@link org.bverify.records.CategoricalAttriubtes} for details
  * @author henryaspegren
  *
  */
@@ -21,26 +22,18 @@ public interface Record extends Serializable {
 	public static String netAmount = "netAmount";
 	
 	/**
-	 * Return a bit field of the categorical attributes of this record
-	 * (Returns a copy that is safe to mutate)
+	 * Returns a copy of the categorical attributes of this record
+	 * (copy is safe to mutate)
 	 * @return
 	 */
-	public BitSet getCategoricalAttributes();
+	public CategoricalAttributes getCategoricalAttributes();
 	
 	/**
-	 * Returns a map of the numerical attributes of this record. 
-	 * (Numerical attributes are represented as mappings of strings to ints)
+	 * Returns a copy of the numerical attributes of this records
+	 * (copy is safe to mutate)
 	 * @return
 	 */
-	public Map<String, Integer> getNumericalAttributes();
-	
-	/**
-	 * Return the numerical attribute value. Numerical attributes
-	 * are identified by strings 
-	 * @param attribute - The numerical attribute to get the value of
-	 * @return may return null if no such attribute exists
-	 */
-	public int getNumericalAttribute(String attribute);
+	public NumericalAttributes getNumericalAttributes();
 	
 	/**
 	 * Get the total amount of goods referenced in this record. These
@@ -92,5 +85,7 @@ public interface Record extends Serializable {
 	 * @param date - the date of creation
 	 */
 	public void setDateCreated(Date date);
-	
+
 }
+
+

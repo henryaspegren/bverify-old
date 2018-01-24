@@ -4,34 +4,28 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
-import java.util.BitSet;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.bverify.accounts.Account;
-import org.bverify.aggregators.RecordAggregation;
 
 
 public abstract class Change implements Record {
 
-	private static final long serialVersionUID = 2L;
+	private static final long serialVersionUID = 3L;
 	
 	// should be later moved over to a categorical attribute
 	protected final String goodType; 
 	
+	// basic record data
 	protected Date dateCreated;
 	protected byte[] recepientSignature;
 	protected byte[] employeeSignature;
 	protected final Account employee;
 	protected final Account recepient;
 	
-	// categorical attributes
-	protected final BitSet categoricalAttributes;
-	
-	// numerical attributes, 
-	protected final Map<String, Integer> numericalAttributes;
+	// attributes
+	protected final CategoricalAttributes categoricalAttributes;
+	protected final NumericalAttributes numericalAttributes;
 	
 	
 	public Change(String goodType, int netAmount, int totalAmount,
@@ -39,27 +33,23 @@ public abstract class Change implements Record {
 		this.goodType = goodType;
 		this.recepient = recepient;
 		this.employee = employee;
-		this.numericalAttributes = new HashMap<String, Integer>();
-		this.numericalAttributes.put(Record.totalAmount, totalAmount);
-		this.numericalAttributes.put(Record.netAmount, netAmount);
-		this.categoricalAttributes = new BitSet(RecordAggregation.NUM_ATTRBUTES);
+		this.numericalAttributes = new NumericalAttributes();
+		this.numericalAttributes.setAttribute(0, totalAmount);
+		this.numericalAttributes.setAttribute(1, netAmount);
+		this.categoricalAttributes = new CategoricalAttributes();
 		this.dateCreated = new Date();
 	}
 	
 	@Override
 	public int getTotalAmount() {
-		return this.numericalAttributes.get(Record.totalAmount);
+		return this.numericalAttributes.getAttribute(0);
 	}
 
 	@Override
 	public int getNetChange() {
-		return this.numericalAttributes.get(Record.netAmount);
+		return this.numericalAttributes.getAttribute(1);
 	}
 	
-	@Override
-	public int getNumericalAttribute(String attribute) {
-		return this.numericalAttributes.get(attribute);
-	}
 	
 	public abstract byte[] getSignedPortion();
 	
@@ -138,16 +128,15 @@ public abstract class Change implements Record {
 	}
 	
 	@Override
-	public BitSet getCategoricalAttributes() {
+	public CategoricalAttributes getCategoricalAttributes() {
 		// make sure to not return a mutable reference
-		return (BitSet) this.categoricalAttributes.clone();
+		return new CategoricalAttributes(this.categoricalAttributes);
 	}
 	
 	@Override
-	public Map<String, Integer> getNumericalAttributes(){
+	public NumericalAttributes getNumericalAttributes(){
 		// this creates a copy which is safe to mutate
-		// (strings and integers are immutable types in Java)
-		return new HashMap<String, Integer>(this.numericalAttributes);
+		return new NumericalAttributes(this.numericalAttributes);
 	}
 	
 	protected StringBuilder getStringHelper() {
@@ -168,16 +157,9 @@ public abstract class Change implements Record {
 		stringRep.append("Date Created: ");
 		stringRep.append(this.dateCreated);
 		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Categorical Attributes: ");
 		stringRep.append(this.categoricalAttributes);
 		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Numerical Attributes: ");
-		for( Entry<String, Integer> entry :this.numericalAttributes.entrySet() ) {
-			stringRep.append(System.getProperty("line.separator"));
-			stringRep.append(entry.getKey());
-			stringRep.append("\t");
-			stringRep.append(entry.getValue());
-		}
+		stringRep.append(this.numericalAttributes);
 		return stringRep;
 	}
 

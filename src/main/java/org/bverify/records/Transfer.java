@@ -26,38 +26,43 @@ public class Transfer implements Record {
 	private final String goodType;
 	private final Account sender;
 	private final Account recepient;
-	
 	private byte[] senderSignature;
 	private byte[] recepientSignature;
 	
-	private final BitSet categoricalAttributes;
-	private final Map<String, Integer> numericalAttributes;
+	private final CategoricalAttributes categoricalAttributes;
+	private final NumericalAttributes numericalAttributes;
 	
 	public Transfer(String goodType, int amount, Account sender, Account recepient) {
 		this.goodType = goodType;
 		this.sender = sender;
 		this.recepient = recepient;
 		this.dateCreated = new Date();
-		this.categoricalAttributes = new BitSet(RecordAggregation.NUM_ATTRBUTES);
-		this.numericalAttributes  = new HashMap<String, Integer>();
-		this.numericalAttributes.put(Record.totalAmount, amount);
-		this.numericalAttributes.put(Record.netAmount, 0);
+		this.numericalAttributes = new NumericalAttributes();
+		this.numericalAttributes.setAttribute(1, 0);
+		this.numericalAttributes.setAttribute(0, amount);
+		this.categoricalAttributes = new CategoricalAttributes();
 	}
 	
 	@Override
-	public BitSet getCategoricalAttributes() {
-		// return a copy to avoid returning a mutable reference
-		return (BitSet) this.categoricalAttributes.clone();
+	public CategoricalAttributes getCategoricalAttributes() {
+		// make sure to not return a mutable reference
+		return new CategoricalAttributes(this.categoricalAttributes);
+	}
+	
+	@Override
+	public NumericalAttributes getNumericalAttributes(){
+		// this creates a copy which is safe to mutate
+		return new NumericalAttributes(this.numericalAttributes);
 	}
 	
 	@Override
 	public int getTotalAmount() {
-		return this.numericalAttributes.get(Record.totalAmount);
+		return this.numericalAttributes.getAttribute(0);
 	}
 
 	@Override
 	public int getNetChange() {
-		return this.numericalAttributes.get(Record.netAmount);
+		return this.numericalAttributes.getAttribute(1);
 	}
 
 	public String getTypeOfGood() {
@@ -106,8 +111,8 @@ public class Transfer implements Record {
 
 	@Override
 	public boolean isValid() {
-		if( this.numericalAttributes.get(Record.totalAmount) > 0 
-				&& this.numericalAttributes.get(Record.netAmount) 
+		if( this.getTotalAmount() > 0 
+				&& this.getNetChange()
 				== 0 && this.isSigned()) {
 			return true;
 		}
@@ -139,7 +144,7 @@ public class Transfer implements Record {
 		byte[] goodType = this.goodType.getBytes();
 		byte[] senderid = Longs.toByteArray(this.sender.getId());
 		byte[] accountid = Longs.toByteArray(this.recepient.getId());
-		byte[] amount = Ints.toByteArray(this.numericalAttributes.get(Record.totalAmount));
+		byte[] amount = Ints.toByteArray(this.getTotalAmount());
 		byte[] date = this.dateCreated.toString().getBytes();
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
@@ -183,16 +188,10 @@ public class Transfer implements Record {
 		stringRep.append(System.getProperty("line.separator"));
 		stringRep.append("Date Created: ");
 		stringRep.append(this.dateCreated);
-		stringRep.append("Categorical Attributes: ");
+		stringRep.append(System.getProperty("line.separator"));
 		stringRep.append(this.categoricalAttributes);
 		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Numerical Attributes: ");
-		for( Entry<String, Integer> entry :this.numericalAttributes.entrySet() ) {
-			stringRep.append(System.getProperty("line.separator"));
-			stringRep.append(entry.getKey());
-			stringRep.append("\t");
-			stringRep.append(entry.getValue());
-		}
+		stringRep.append(this.numericalAttributes);
 		return stringRep.toString();		
 	}
 	
@@ -203,6 +202,7 @@ public class Transfer implements Record {
 			if(ar.dateCreated.equals(this.dateCreated) &&
 					ar.goodType.equals(this.goodType) &&
 					ar.numericalAttributes.equals(this.numericalAttributes) &&
+					ar.categoricalAttributes.equals(this.categoricalAttributes) &&
 					ar.recepient.equals(this.recepient) &&
 					ar.sender.equals(this.sender)
 			) {
@@ -210,16 +210,6 @@ public class Transfer implements Record {
 			}
 		}
 		return false;
-	}
-
-	@Override
-	public int getNumericalAttribute(String attribute) {
-		return this.numericalAttributes.get(attribute);
-	}
-	
-	@Override
-	public Map<String, Integer> getNumericalAttributes(){
-		return new HashMap<String, Integer>(this.numericalAttributes);
 	}
 
 }

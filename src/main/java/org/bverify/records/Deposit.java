@@ -10,7 +10,7 @@ import com.google.common.primitives.Longs;
 
 public class Deposit extends Change {
 	
-	private static final long serialVersionUID = 2L;
+	private static final long serialVersionUID = 3L;
 
 	public Deposit(String goodType, int amount, Account recepient, Account employee) {
 		super(goodType, amount, amount, recepient, employee);
@@ -21,8 +21,8 @@ public class Deposit extends Change {
 	public boolean isValid() {
 		// later can be made richer and possible depend on 
 		// current state, etc. 
-		if( this.numericalAttributes.get("totalAmount") > 0 &&
-				this.numericalAttributes.get("netAmount") > 0 && this.isSigned()) {
+		if( this.getTotalAmount() > 0 &&
+				this.getNetChange() > 0 && this.isSigned()) {
 			return true;
 		}
 		else {
@@ -39,7 +39,7 @@ public class Deposit extends Change {
 		byte[] goodType = this.goodType.getBytes();
 		byte[] employeeid = Longs.toByteArray(this.employee.getId());
 		byte[] accountid = Longs.toByteArray(this.recepient.getId());
-		byte[] amount = Ints.toByteArray(this.numericalAttributes.get("totalAmount"));
+		byte[] amount = Ints.toByteArray(this.getTotalAmount());
 		byte[] date = this.dateCreated.toString().getBytes();
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
@@ -54,7 +54,6 @@ public class Deposit extends Change {
 			messageBytes = outputStream.toByteArray( );	
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			messageBytes = "ERROR!!!!".getBytes();
 		}
@@ -80,8 +79,9 @@ public class Deposit extends Change {
 			if(ar.dateCreated.equals(this.dateCreated) &&
 					ar.goodType.equals(this.goodType) &&
 					ar.numericalAttributes.equals(this.numericalAttributes) &&
+					ar.categoricalAttributes.equals(this.categoricalAttributes) &&
 					ar.recepient.equals(this.recepient) &&
-					ar.employee.equals(this.employee)
+					ar.employee.equals(this.employee) 
 			) {
 				return true;
 			}
