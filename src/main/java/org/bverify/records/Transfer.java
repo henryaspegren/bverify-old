@@ -6,67 +6,27 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
-import java.util.BitSet;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.bverify.accounts.Account;
-import org.bverify.aggregators.RecordAggregation;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
-public class Transfer implements Record {
+public class Transfer extends RecordBase  {
 
-	private static final long serialVersionUID = 2L;
+	private static final long serialVersionUID = 3L;
 	
-	private Date dateCreated;
-	private final String goodType;
 	private final Account sender;
 	private final Account recepient;
 	private byte[] senderSignature;
 	private byte[] recepientSignature;
-	
-	private final CategoricalAttributes categoricalAttributes;
-	private final NumericalAttributes numericalAttributes;
-	
+		
 	public Transfer(String goodType, int amount, Account sender, Account recepient) {
-		this.goodType = goodType;
+		super(new CategoricalAttributes(), new NumericalAttributes(), goodType);
 		this.sender = sender;
 		this.recepient = recepient;
-		this.dateCreated = new Date();
-		this.numericalAttributes = new NumericalAttributes();
 		this.numericalAttributes.setAttribute(1, 0);
 		this.numericalAttributes.setAttribute(0, amount);
-		this.categoricalAttributes = new CategoricalAttributes();
-	}
-	
-	@Override
-	public CategoricalAttributes getCategoricalAttributes() {
-		// make sure to not return a mutable reference
-		return new CategoricalAttributes(this.categoricalAttributes);
-	}
-	
-	@Override
-	public NumericalAttributes getNumericalAttributes(){
-		// this creates a copy which is safe to mutate
-		return new NumericalAttributes(this.numericalAttributes);
-	}
-	
-	@Override
-	public int getTotalAmount() {
-		return this.numericalAttributes.getAttribute(0);
-	}
-
-	@Override
-	public int getNetChange() {
-		return this.numericalAttributes.getAttribute(1);
-	}
-
-	public String getTypeOfGood() {
-		return this.goodType;
 	}
 	
 	public void signSender() {
@@ -78,8 +38,6 @@ public class Transfer implements Record {
 		} 
 	}
 	
-	
-	// Recipient 
 	public void signRecipient() {
 		try {
 			this.recepientSignature = this.recepient.sign(this.getSignedPortion());
@@ -121,11 +79,6 @@ public class Transfer implements Record {
 		}
 	}
 	
-	@Override
-	public Date dateCreated() {
-		return this.dateCreated;
-	}
-	
 	public Account getSender() {
 		return this.sender;
 	}
@@ -135,10 +88,6 @@ public class Transfer implements Record {
 	}
 	
 	@Override
-	public void setDateCreated(Date date) {
-		this.dateCreated = date;
-	}
-	
 	public byte[] getSignedPortion(){
 		byte[] recordType = "TRANSFER".getBytes();
 		byte[] goodType = this.goodType.getBytes();

@@ -1,9 +1,7 @@
 package org.bverify.records;
 
 import java.io.Serializable;
-import java.util.BitSet;
 import java.util.Date;
-import java.util.Map;
 
 
 /**
@@ -17,10 +15,7 @@ import java.util.Map;
  *
  */
 public interface Record extends Serializable {
-	
-	public static String totalAmount = "totalAmount";
-	public static String netAmount = "netAmount";
-	
+
 	/**
 	 * Returns a copy of the categorical attributes of this record
 	 * (copy is safe to mutate)
@@ -85,6 +80,12 @@ public interface Record extends Serializable {
 	 * @param date - the date of creation
 	 */
 	public void setDateCreated(Date date);
+	
+	/**
+	 * Get the signed portion of the record
+	 * @return
+	 */
+	public byte[] getSignedPortion();
 
 }
 

@@ -1,7 +1,6 @@
 package org.bverify.proofs;
 
 import java.util.Arrays;
-import java.util.BitSet;
 
 import org.bverify.aggregators.RecordAggregation;
 
