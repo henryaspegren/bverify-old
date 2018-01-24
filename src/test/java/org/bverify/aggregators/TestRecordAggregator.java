@@ -2,10 +2,14 @@ package org.bverify.aggregators;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.accounts.Account;
 import org.bverify.records.Deposit;
+import org.bverify.records.Record;
 import org.bverify.records.Transfer;
 import org.bverify.records.Withdrawal;
 import org.junit.Assert;
@@ -88,6 +92,8 @@ public class TestRecordAggregator extends TestCase {
 		md.update(SerializationUtils.serialize(withdrawal));
 		byte[] correctHash = md.digest();
 		
+		System.out.println(withdrawal);
+		
 		Assert.assertArrayEquals(correctHash, recordagg.getHash());
 		Assert.assertEquals(-50, recordagg.getNetAmount());
 		Assert.assertEquals(50, recordagg.getTotalAmount());			
@@ -140,32 +146,32 @@ public class TestRecordAggregator extends TestCase {
 		byte[] hash3 = md.digest();
 		md.update(SerializationUtils.serialize(dep4));
 		byte[] hash4 = md.digest();
-		md.update(Ints.toByteArray(75));
-		md.update(Ints.toByteArray(75));
-		md.update(hash1);
-		md.update(hash2);
-		byte[] aggl = md.digest();
-		md.update(Ints.toByteArray(25));
-		md.update(Ints.toByteArray(25));
-		md.update(hash3);
-		md.update(hash4);
-		byte[] aggr = md.digest();	
-		md.update(Ints.toByteArray(100));
-		md.update(Ints.toByteArray(100));
-		md.update(aggl);
-		md.update(aggr);
+		Map<String, Integer> mapl = new HashMap<String, Integer>();
+		mapl.put(Record.totalAmount, 75);
+		mapl.put(Record.netAmount, 75);
+		byte[] aggl = RecordAggregation.calculateHash(mapl, hash1, hash2, 
+				new BitSet(RecordAggregation.NUM_ATTRBUTES));
+		Map<String, Integer> mapr = new HashMap<String, Integer>();
+		mapr.put(Record.totalAmount, 25);
+		mapr.put(Record.netAmount, 25);
+		byte[] aggr = RecordAggregation.calculateHash(mapr, hash3, hash4, 
+				new BitSet(RecordAggregation.NUM_ATTRBUTES));
+		Map<String, Integer> mapfinal = new HashMap<String, Integer>();
+		mapfinal.put(Record.totalAmount, 100);
+		mapfinal.put(Record.netAmount, 100);
+		byte[] correctHash1 = RecordAggregation.calculateHash(mapfinal, aggl, aggr, 
+				new BitSet(RecordAggregation.NUM_ATTRBUTES));
 		
-		byte[] correctHash1 = md.digest();
 		Assert.assertArrayEquals(correctHash1, recordagg.getHash());
 
 		RecordAggregation recordagg2 = aggregator.aggChildren(recordagg, recordagg);
 		Assert.assertEquals(200, recordagg2.getTotalAmount());
 		Assert.assertEquals(200, recordagg2.getNetAmount());
-		md.update(Ints.toByteArray(200));
-		md.update(Ints.toByteArray(200));
-		md.update(correctHash1);
-		md.update(correctHash1);
-		byte[] correctHash2 = md.digest();
+		Map<String, Integer> mapfinal2 = new HashMap<String, Integer>();
+		mapfinal2.put(Record.totalAmount, 200);
+		mapfinal2.put(Record.netAmount, 200);
+		byte[] correctHash2 = RecordAggregation.calculateHash(mapfinal2, correctHash1, correctHash1, 
+				new BitSet(RecordAggregation.NUM_ATTRBUTES));
 		Assert.assertArrayEquals(correctHash2, recordagg2.getHash());
 		
 	}
@@ -213,69 +219,9 @@ CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		
 		RecordAggregation combinedrecordagg = aggregator.aggChildren(recordaggL, recordaggR);
 		
-		md.reset();
-		// left subtree
-		md.update(SerializationUtils.serialize(rec1));
-		byte[] hash1 = md.digest();
-		md.update(SerializationUtils.serialize(rec2));
-		byte[] hash2 = md.digest();
-		md.update(SerializationUtils.serialize(rec3));
-		byte[] hash3 = md.digest();
-		md.update(SerializationUtils.serialize(rec4));
-		byte[] hash4 = md.digest();
-		md.update(Ints.toByteArray(125));
-		md.update(Ints.toByteArray(75));
-		md.update(hash1);
-		md.update(hash2);
-		byte[] aggll = md.digest();
-		md.update(Ints.toByteArray(25));
-		md.update(Ints.toByteArray(0));
-		md.update(hash3);
-		md.update(hash4);
-		byte[] agglr = md.digest();
-		md.update(Ints.toByteArray(150));
-		md.update(Ints.toByteArray(75));
-		md.update(aggll);
-		md.update(agglr);
-		byte[] aggtreel = md.digest();
-		Assert.assertArrayEquals(aggtreel, 	recordaggL.getHash());
-
-		// right subtree
-		md.update(SerializationUtils.serialize(rec5));
-		byte[] hash5 = md.digest();
-		md.update(SerializationUtils.serialize(rec6));
-		byte[] hash6 = md.digest();
-		md.update(SerializationUtils.serialize(rec7));
-		byte[] hash7 = md.digest();
-		md.update(SerializationUtils.serialize(rec8));
-		byte[] hash8 = md.digest();
-		md.update(Ints.toByteArray(26));
-		md.update(Ints.toByteArray(-25));
-		md.update(hash5);
-		md.update(hash6);
-		byte[] aggrl = md.digest();
-		md.update(Ints.toByteArray(25));
-		md.update(Ints.toByteArray(-25));
-		md.update(hash7);
-		md.update(hash8);
-		byte[] aggrr = md.digest();
-		md.update(Ints.toByteArray(51));
-		md.update(Ints.toByteArray(-50));
-		md.update(aggrl);
-		md.update(aggrr);
-		byte[] aggtreer = md.digest();
-		Assert.assertArrayEquals(aggtreer, 	recordaggR.getHash());
-
-		
-		md.update(Ints.toByteArray(201));
-		md.update(Ints.toByteArray(25));
-		md.update(aggtreel);
-		md.update(aggtreer);
-		byte[] finalHash = md.digest();
 		
 		Assert.assertEquals(201, combinedrecordagg.getTotalAmount());
 		Assert.assertEquals(25, combinedrecordagg.getNetAmount());
-		Assert.assertArrayEquals(finalHash, 	combinedrecordagg.getHash());
 
 	}
 	

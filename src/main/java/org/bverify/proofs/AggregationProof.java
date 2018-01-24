@@ -1,6 +1,7 @@
 package org.bverify.proofs;
 
 import java.util.Arrays;
+import java.util.BitSet;
 
 import org.bverify.aggregators.RecordAggregation;
 
@@ -25,8 +26,8 @@ public class AggregationProof implements Proof {
 		// STEP 1 - verify the final preimage 
 		// 			correctly reproduces the hash
 		byte[] hashRes = RecordAggregation.calculateHash(
-				this.mainAgg.getTotalAmount(), this.mainAgg.getNetAmount(), 
-				this.leftPreImageHash, this.rightPreImageHash);
+				this.mainAgg.getNumericalAttributes(), 
+				this.leftPreImageHash, this.rightPreImageHash, this.mainAgg.getCategoricalAttributes());
 		
 		boolean hashPreimageValid = Arrays.equals(hashRes, this.mainAgg.getHash());
 		

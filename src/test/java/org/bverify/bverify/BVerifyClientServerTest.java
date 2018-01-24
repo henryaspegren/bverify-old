@@ -1,45 +1,30 @@
 package org.bverify.bverify;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
+import org.bverify.accounts.Account;
 import org.bverify.records.Deposit;
 import org.bverify.records.Transfer;
 import org.bverify.records.Withdrawal;
 import org.catena.common.ClientServerTest;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 
 public class BVerifyClientServerTest extends ClientServerTest {
+	
+	private static Account alice = new Account("Alice", 1);
+	private static Account bob = new Account("Bob", 2);
+	private static Account charlie = new Account("Charlie", 3);
 	
 	public static Deposit deposit;
 	public static Withdrawal withdrawal;
 	public static Transfer transfer;
 	
+	private static String goodCorn = "CORN";
+	
 	
 	@BeforeClass
 	public static void setup() {
-		try {
-	        ObjectInputStream oosDeposit = new ObjectInputStream(new FileInputStream("/home/henryaspegren/Documents/DCI_CODE/bverify/saved_objects/deposit"));
-			deposit = (Deposit) oosDeposit.readObject();
-	        oosDeposit.close();
-	        
-	        ObjectInputStream oosWithdrawal = new ObjectInputStream(new FileInputStream("/home/henryaspegren/Documents/DCI_CODE/bverify/saved_objects/withdrawal"));
-	        withdrawal = (Withdrawal) oosWithdrawal.readObject();
-	        oosWithdrawal.close();
-	        
-	        ObjectInputStream oosTransfer = new ObjectInputStream(new FileInputStream("/home/henryaspegren/Documents/DCI_CODE/bverify/saved_objects/transfer"));
-	        transfer = (Transfer) oosTransfer.readObject();
-	        oosTransfer.close();
-
-        
-		} catch (ClassNotFoundException | IOException e) {
-			e.printStackTrace();
-			Assert.fail();
-		}
-		
-		
+			deposit = new Deposit(goodCorn, 100, alice, bob);	        
+			withdrawal = new Withdrawal(goodCorn, 100, alice, bob);      
+			transfer = new Transfer(goodCorn, 50, alice, charlie);		
 	}
 	
 

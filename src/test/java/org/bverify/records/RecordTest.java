@@ -84,4 +84,11 @@ public class RecordTest extends TestCase {
 		Assert.assertEquals(rec, tf);	
 	}
 	
+	public void testPrintRecord() {
+		Deposit dep = new Deposit(goodCorn, 100, alice, bob);
+		dep.signEmployee();
+		dep.signRecipient();
+		System.out.println(dep);
+	}
+	
 }

@@ -10,39 +10,19 @@ import com.google.common.primitives.Longs;
 
 public class Withdrawal extends Change {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	public Withdrawal(String goodType, int amount, Account recepient, Account employee) {
-		super(goodType, amount, recepient, employee);
-	}
-	
-
-	@Override
-	public int getTotalAmount() {
-		int total = this.amount;
-		assert total > 0;
-		return total;
-	}
-
-	@Override
-	public int getNetChange() {
-		assert this.amount > 0;
-		return -1*this.amount;
-	}
-	
-	public Account getRecepientAccount() {
-		return this.recepient;
-	}
-	
-	public Account getEmployeeAccount() {
-		return this.employee;
+		super(goodType, -1*amount, amount, recepient, employee);
 	}
 	
 	@Override
 	public boolean isValid() {
 		// later can be made richer and possible depend on 
 		// current state, etc. 
-		if( this.amount < 0 & this.isSigned()) {
+		if( this.getNumericalAttribute("netAmount") < 0 &&
+				this.getNumericalAttribute("totalAmount") > 0 && 
+				this.isSigned()) {
 			return true;
 		}
 		else {
@@ -53,12 +33,13 @@ public class Withdrawal extends Change {
 	// TODO: Needs to be redone with Google protobuf
 	// this will implement the serialization and deserialization 
 	// for me!
+	@Override
 	public byte[] getSignedPortion(){
 		byte[] recordType = "WITHDRAWAL".getBytes();
 		byte[] goodType = this.goodType.getBytes();
 		byte[] employeeid = Longs.toByteArray(this.employee.getId());
 		byte[] accountid = Longs.toByteArray(this.recepient.getId());
-		byte[] amount = Ints.toByteArray(this.amount);
+		byte[] amount = Ints.toByteArray(this.getNumericalAttribute("totalAmount"));
 		byte[] date = this.dateCreated.toString().getBytes();
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
@@ -87,24 +68,7 @@ public class Withdrawal extends Change {
 		StringBuilder stringRep = new StringBuilder();
 		stringRep.append("WITHDRAWAL");
 		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Recepient: ");
-		stringRep.append(this.recepient.getName());
-		stringRep.append("\t");
-		stringRep.append(this.recepientSignature);
-		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Employee: ");
-		stringRep.append(this.employee.getName());
-		stringRep.append("\t");
-		stringRep.append(this.employeeSignature);
-		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Good: ");
-		stringRep.append(this.goodType);
-		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Amount: ");
-		stringRep.append(this.amount);
-		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Date Created: ");
-		stringRep.append(this.dateCreated);
+		stringRep.append(this.getStringHelper());
 		return stringRep.toString();
 	}
 	
@@ -115,7 +79,7 @@ public class Withdrawal extends Change {
 			Withdrawal ar = (Withdrawal) arg0;
 			if(ar.dateCreated.equals(this.dateCreated) &&
 					ar.goodType.equals(this.goodType) &&
-					ar.amount == this.amount &&
+					ar.numericalAttributes.equals(this.numericalAttributes) &&
 					ar.recepient.equals(this.recepient) &&
 					ar.employee.equals(this.employee)
 					) {

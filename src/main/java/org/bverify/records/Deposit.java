@@ -10,39 +10,19 @@ import com.google.common.primitives.Longs;
 
 public class Deposit extends Change {
 	
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
 
 	public Deposit(String goodType, int amount, Account recepient, Account employee) {
-		super(goodType, amount, recepient, employee);
+		super(goodType, amount, amount, recepient, employee);
 	}
 	
-	@Override
-	public int getTotalAmount() {
-		// total amount is always positive
-		assert this.amount > 0;
-		return this.amount;
-	}
-
-	@Override
-	public int getNetChange() {
-		assert this.amount > 0;
-		return this.amount;
-	}
-	
-	public Account getRecepientAccount() {
-		return this.recepient;
-	}
-	
-	
-	public Account getEmployeeAccount() {
-		return this.employee;
-	}
 	
 	@Override
 	public boolean isValid() {
 		// later can be made richer and possible depend on 
 		// current state, etc. 
-		if( this.amount > 0 & this.isSigned()) {
+		if( this.numericalAttributes.get("totalAmount") > 0 &&
+				this.numericalAttributes.get("netAmount") > 0 && this.isSigned()) {
 			return true;
 		}
 		else {
@@ -50,15 +30,16 @@ public class Deposit extends Change {
 		}
 	}
 
-	// TODO: Needs to be redone with Google protobuf
+	// TODO: Needs to be redone with Google protobuf / in a more general way
 	// this will implement the serialization and deserialization 
 	// for me!
+	@Override
 	public byte[] getSignedPortion(){
 		byte[] recordType = "DEPOSIT".getBytes();
 		byte[] goodType = this.goodType.getBytes();
 		byte[] employeeid = Longs.toByteArray(this.employee.getId());
 		byte[] accountid = Longs.toByteArray(this.recepient.getId());
-		byte[] amount = Ints.toByteArray(this.amount);
+		byte[] amount = Ints.toByteArray(this.numericalAttributes.get("totalAmount"));
 		byte[] date = this.dateCreated.toString().getBytes();
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
@@ -85,26 +66,9 @@ public class Deposit extends Change {
 	@Override
 	public String toString() {
 		StringBuilder stringRep = new StringBuilder();
-		stringRep.append("DEPOSIT");
+		stringRep.append("--DEPOSIT--");
 		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Recepient: ");
-		stringRep.append(this.recepient.getName());
-		stringRep.append("\t");
-		stringRep.append(this.recepientSignature);
-		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Employee: ");
-		stringRep.append(this.employee.getName());
-		stringRep.append("\t");
-		stringRep.append(this.employeeSignature);
-		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Good: ");
-		stringRep.append(this.goodType);
-		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Amount: ");
-		stringRep.append(this.amount);
-		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Date Created: ");
-		stringRep.append(this.dateCreated);
+		stringRep.append(this.getStringHelper());
 		return stringRep.toString();
 	}
 	
@@ -115,7 +79,7 @@ public class Deposit extends Change {
 			Deposit ar = (Deposit) arg0;
 			if(ar.dateCreated.equals(this.dateCreated) &&
 					ar.goodType.equals(this.goodType) &&
-					ar.amount == this.amount &&
+					ar.numericalAttributes.equals(this.numericalAttributes) &&
 					ar.recepient.equals(this.recepient) &&
 					ar.employee.equals(this.employee)
 			) {

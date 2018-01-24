@@ -6,42 +6,58 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
+import java.util.BitSet;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.bverify.accounts.Account;
+import org.bverify.aggregators.RecordAggregation;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
 
 public class Transfer implements Record {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 2L;
+	
 	private Date dateCreated;
 	private final String goodType;
-	private int amount;
 	private final Account sender;
 	private final Account recepient;
 	
 	private byte[] senderSignature;
 	private byte[] recepientSignature;
 	
+	private final BitSet categoricalAttributes;
+	private final Map<String, Integer> numericalAttributes;
+	
 	public Transfer(String goodType, int amount, Account sender, Account recepient) {
 		this.goodType = goodType;
-		this.amount = amount;
 		this.sender = sender;
 		this.recepient = recepient;
 		this.dateCreated = new Date();
+		this.categoricalAttributes = new BitSet(RecordAggregation.NUM_ATTRBUTES);
+		this.numericalAttributes  = new HashMap<String, Integer>();
+		this.numericalAttributes.put(Record.totalAmount, amount);
+		this.numericalAttributes.put(Record.netAmount, 0);
+	}
+	
+	@Override
+	public BitSet getCategoricalAttributes() {
+		// return a copy to avoid returning a mutable reference
+		return (BitSet) this.categoricalAttributes.clone();
 	}
 	
 	@Override
 	public int getTotalAmount() {
-		assert this.amount > 0;
-		return this.amount;
+		return this.numericalAttributes.get(Record.totalAmount);
 	}
 
 	@Override
 	public int getNetChange() {
-		return 0;
+		return this.numericalAttributes.get(Record.netAmount);
 	}
 
 	public String getTypeOfGood() {
@@ -51,19 +67,10 @@ public class Transfer implements Record {
 	public void signSender() {
 		try {
 			this.senderSignature = this.sender.sign(this.getSignedPortion());
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
+		} catch (InvalidKeyException | NoSuchProviderException
+				| NoSuchAlgorithmException | SignatureException e) {
 			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchProviderException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SignatureException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} 
 	}
 	
 	
@@ -71,19 +78,10 @@ public class Transfer implements Record {
 	public void signRecipient() {
 		try {
 			this.recepientSignature = this.recepient.sign(this.getSignedPortion());
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
+		} catch (InvalidKeyException | NoSuchProviderException
+				| NoSuchAlgorithmException | SignatureException e) {
 			e.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchProviderException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SignatureException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		} 
 	}
 
 	@Override
@@ -108,7 +106,9 @@ public class Transfer implements Record {
 
 	@Override
 	public boolean isValid() {
-		if( this.amount > 0 && this.isSigned()) {
+		if( this.numericalAttributes.get(Record.totalAmount) > 0 
+				&& this.numericalAttributes.get(Record.netAmount) 
+				== 0 && this.isSigned()) {
 			return true;
 		}
 		else {
@@ -139,7 +139,7 @@ public class Transfer implements Record {
 		byte[] goodType = this.goodType.getBytes();
 		byte[] senderid = Longs.toByteArray(this.sender.getId());
 		byte[] accountid = Longs.toByteArray(this.recepient.getId());
-		byte[] amount = Ints.toByteArray(this.amount);
+		byte[] amount = Ints.toByteArray(this.numericalAttributes.get(Record.totalAmount));
 		byte[] date = this.dateCreated.toString().getBytes();
 
 		ByteArrayOutputStream outputStream = new ByteArrayOutputStream( );
@@ -181,11 +181,18 @@ public class Transfer implements Record {
 		stringRep.append("Good: ");
 		stringRep.append(this.goodType);
 		stringRep.append(System.getProperty("line.separator"));
-		stringRep.append("Amount: ");
-		stringRep.append(this.amount);
-		stringRep.append(System.getProperty("line.separator"));
 		stringRep.append("Date Created: ");
 		stringRep.append(this.dateCreated);
+		stringRep.append("Categorical Attributes: ");
+		stringRep.append(this.categoricalAttributes);
+		stringRep.append(System.getProperty("line.separator"));
+		stringRep.append("Numerical Attributes: ");
+		for( Entry<String, Integer> entry :this.numericalAttributes.entrySet() ) {
+			stringRep.append(System.getProperty("line.separator"));
+			stringRep.append(entry.getKey());
+			stringRep.append("\t");
+			stringRep.append(entry.getValue());
+		}
 		return stringRep.toString();		
 	}
 	
@@ -195,7 +202,7 @@ public class Transfer implements Record {
 			Transfer ar = (Transfer) arg0;
 			if(ar.dateCreated.equals(this.dateCreated) &&
 					ar.goodType.equals(this.goodType) &&
-					ar.amount == this.amount &&
+					ar.numericalAttributes.equals(this.numericalAttributes) &&
 					ar.recepient.equals(this.recepient) &&
 					ar.sender.equals(this.sender)
 			) {
@@ -204,6 +211,15 @@ public class Transfer implements Record {
 		}
 		return false;
 	}
+
+	@Override
+	public int getNumericalAttribute(String attribute) {
+		return this.numericalAttributes.get(attribute);
+	}
 	
+	@Override
+	public Map<String, Integer> getNumericalAttributes(){
+		return new HashMap<String, Integer>(this.numericalAttributes);
+	}
 
 }
