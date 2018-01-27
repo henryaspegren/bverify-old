@@ -6,6 +6,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
+import java.util.Arrays;
 
 import org.bverify.accounts.Account;
 
@@ -160,5 +161,14 @@ public class Transfer extends RecordBase  {
 		}
 		return false;
 	}
-
+	
+	@Override
+	public Record deepCopy() {
+		Transfer tf = new Transfer(this.goodType, this.getNumericalAttributes().getAttribute(0), this.sender, 
+				this.recepient);
+		tf.senderSignature = Arrays.copyOf(this.senderSignature, this.senderSignature.length);
+		tf.recepientSignature = Arrays.copyOf(this.recepientSignature, this.recepientSignature.length);
+		tf.dateCreated = this.dateCreated;
+		return tf;
+	}
 }

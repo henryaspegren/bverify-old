@@ -2,6 +2,7 @@ package org.bverify.records;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.bverify.accounts.Account;
 
@@ -88,5 +89,15 @@ public class Withdrawal extends Change {
 		}
 		return false;
 	}
-
+	
+	@Override
+	public Record deepCopy() {
+		Withdrawal wd = new Withdrawal(this.goodType, this.getNumericalAttributes().getAttribute(0), this.recepient, 
+				this.employee);
+		wd.employeeSignature = Arrays.copyOf(this.employeeSignature, this.employeeSignature.length);
+		wd.recepientSignature = Arrays.copyOf(this.recepientSignature, this.recepientSignature.length);
+		wd.dateCreated = this.dateCreated;
+		return wd;
+	}
+	
 }

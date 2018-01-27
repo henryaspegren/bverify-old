@@ -33,13 +33,11 @@ public abstract class RecordBase implements Record {
 	
 	/** These must be implemented and depend on the record type */
 
-	@Override
 	public abstract boolean isSigned();
 
 	@Override
 	public abstract boolean isValid();
 	
-	@Override
 	public abstract byte[] getSignedPortion();
 	
 	@Override
@@ -53,17 +51,14 @@ public abstract class RecordBase implements Record {
 		return new NumericalAttributes(this.numericalAttributes);
 	}
 
-	@Override
 	public int getTotalAmount() {
 		return this.numericalAttributes.getAttribute(0);
 	}
 
-	@Override
 	public int getNetChange() {
 		return this.numericalAttributes.getAttribute(1);
 	}
 
-	@Override
 	public String getTypeOfGood() {
 		return this.goodType;
 	}

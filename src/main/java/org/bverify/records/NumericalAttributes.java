@@ -53,7 +53,7 @@ public class NumericalAttributes implements Serializable {
 	 */
 	public NumericalAttributes add(NumericalAttributes other) {
 		if(this.numberOfAttributes() != other.numberOfAttributes()) {
-			throw new RuntimeException("Error - Trying to OR two Numerical"
+			throw new RuntimeException("Error - Trying to ADD two Numerical"
 					+ "Attributes with Different Numbers of Attributes!");
 		}
 		NumericalAttributes newatt = new NumericalAttributes(this);
@@ -90,8 +90,7 @@ public class NumericalAttributes implements Serializable {
 	public String toString() {
 		StringBuilder message = new StringBuilder();
 		message.append("<Numerical Attributes:");
-		message.append(System.lineSeparator());
-		message.append(this.representation);
+		message.append(Arrays.toString(this.representation));
 		message.append(">");
 		return message.toString();
 	}

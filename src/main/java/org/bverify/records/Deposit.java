@@ -2,6 +2,7 @@ package org.bverify.records;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.bverify.accounts.Account;
 
@@ -87,6 +88,17 @@ public class Deposit extends Change {
 			}
 		}
 		return false;
+	}
+
+
+	@Override
+	public Record deepCopy() {
+		Deposit dep = new Deposit(this.goodType, this.getNumericalAttributes().getAttribute(0), this.recepient, 
+				this.employee);
+		dep.employeeSignature = Arrays.copyOf(this.employeeSignature, this.employeeSignature.length);
+		dep.recepientSignature = Arrays.copyOf(this.recepientSignature, this.recepientSignature.length);
+		dep.dateCreated = this.dateCreated;
+		return dep;
 	}
 
 }

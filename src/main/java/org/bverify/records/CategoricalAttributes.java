@@ -20,20 +20,25 @@ public class CategoricalAttributes implements Serializable {
 	// default number of categorical attributes
 	public static final int DEFAULT_NUM_CATEGORICAL_ATTRIBUTES = 64;
 	
+	private final int size;
+	
 	/**
 	 * Creates the default categorical attributes 
 	 * which are all set to false
 	 */
 	public CategoricalAttributes() {
 		this.representation = new BitSet(DEFAULT_NUM_CATEGORICAL_ATTRIBUTES);
+		this.size = DEFAULT_NUM_CATEGORICAL_ATTRIBUTES;
 	}
 	
 	public CategoricalAttributes(int numberAttributes) {
 		this.representation = new BitSet(numberAttributes);
+		this.size = numberAttributes;
 	}
 	
 	public CategoricalAttributes(CategoricalAttributes copy) {
 		this.representation = (BitSet) copy.representation.clone();
+		this.size = copy.size;
 	}
 	
 	public boolean getAttribute(int attributeIdx) {
@@ -66,8 +71,45 @@ public class CategoricalAttributes implements Serializable {
 		return newcatatt;
 	}
 	
+	/**
+	 * Creates a new categorical attributes by logically ANDing this 
+	 * categorical attribute with another set of categorical attributes. Must 
+	 * have the same number of attributes or will throw a runtime error. Does NOT 
+	 * mutate this.
+	 * @param other
+	 * @return
+	 */
+	public CategoricalAttributes and(CategoricalAttributes other) {
+		if(this.numberOfAttributes() != other.numberOfAttributes()) {
+			System.out.println(this.size);
+			System.out.println(other.size);
+			throw new RuntimeException("Error - Trying to AND two Categorical"
+					+ "Attributes with Different Numbers of Attributes!");	
+		}
+		CategoricalAttributes newcatatt = new CategoricalAttributes(this);
+		newcatatt.representation.and(other.representation);
+		return newcatatt;
+	}
+	
+	/**
+	 * Creates a new categorical attributes by logically XORing this 
+	 * categorial attribute with another set of categorical attributes. Must
+	 * have the same number of attributes or will throw a runtime error. Does 
+	 * NOT mutate this!
+	 * @param other
+	 * @return
+	 */
+	public CategoricalAttributes xor(CategoricalAttributes other) {
+		if(this.numberOfAttributes() != other.numberOfAttributes()) {
+			throw new RuntimeException("Error - Trying to AND two Categorical"
+					+ "Attributes with Different Numbers of Attributes!");	
+		}
+		CategoricalAttributes newcatatt = new CategoricalAttributes(this);
+		newcatatt.representation.xor(other.representation);
+		return newcatatt;
+	}	
 	public int numberOfAttributes() {
-		return this.representation.size();
+		return this.size;
 	}
 	
 	@Override
@@ -79,7 +121,8 @@ public class CategoricalAttributes implements Serializable {
 	public boolean equals(Object arg0) {
 		if( arg0 instanceof CategoricalAttributes) {
 			CategoricalAttributes arg0cast = (CategoricalAttributes) arg0;
-			return this.representation.equals(arg0cast.representation);
+			return this.representation.equals(arg0cast.representation) && 
+					this.size == arg0cast.size;
 		}
 		return false;
 	}
@@ -88,7 +131,6 @@ public class CategoricalAttributes implements Serializable {
 	public String toString() {
 		StringBuilder message = new StringBuilder();
 		message.append("<Categorical Attributes:");
-		message.append(System.lineSeparator());
 		message.append(this.representation);
 		message.append(">");
 		return message.toString();

@@ -2,25 +2,20 @@ package org.bverify.aggregators;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.accounts.Account;
 import org.bverify.records.CategoricalAttributes;
 import org.bverify.records.Deposit;
 import org.bverify.records.NumericalAttributes;
-import org.bverify.records.Record;
+import org.bverify.records.SimpleRecord;
 import org.bverify.records.Transfer;
 import org.bverify.records.Withdrawal;
 import org.junit.Assert;
 
-import com.google.common.primitives.*;
-
+import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
-import junit.framework.Test;
 
 		
 public class TestRecordAggregator extends TestCase {
@@ -68,6 +63,7 @@ public class TestRecordAggregator extends TestCase {
 		Assert.assertEquals(0, recordagg.getNetAmount());
 		Assert.assertEquals(0, recordagg.getTotalAmount());
 	}
+	
 	
 	public void testAggDeposit() {
 		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
@@ -252,6 +248,96 @@ CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		Assert.assertEquals(recordcombined, recordaggFromBytes);
 	}
 	
+	public void testRecordAggregationPrint() {
+		Deposit recordA = new Deposit(goodCorn, 101, alice, bob);
+		Withdrawal recordB = new Withdrawal(goodCorn, 10, alice, charlie);
+		RecordAggregation recordaggA = new RecordAggregation(recordA);
+		RecordAggregation recordaggB = new RecordAggregation(recordB);
+		RecordAggregation recordcombined = new RecordAggregation(recordaggA, recordaggB);	
+		System.out.println(recordcombined);
+	}
 	
+	public void testRecordAggregationSimpleRecords() {
+		NumericalAttributes n1 = new NumericalAttributes(10);
+		n1.setAttribute(5, 100);
+		
+		CategoricalAttributes c1 = new CategoricalAttributes(10);
+		c1.setAttribute(0, true);
+		c1.setAttribute(2, true);
+		c1.setAttribute(4, true);
+		c1.setAttribute(5, true);
 
+		NumericalAttributes n2 = new NumericalAttributes(10);
+		n2.setAttribute(4, 100);
+		n2.setAttribute(5, -50);
+	
+		CategoricalAttributes c2 = new CategoricalAttributes(10);
+		c2.setAttribute(1, true);
+		c2.setAttribute(5, true);
+		
+		SimpleRecord sr1 = new SimpleRecord(c1,n1);
+		SimpleRecord sr2 = new SimpleRecord(c2,n2);
+		
+		
+		RecordAggregation agg = new RecordAggregation(new RecordAggregation(sr1),
+				new RecordAggregation(sr2));
+		
+		CategoricalAttributes cfinal = new CategoricalAttributes(10);
+		cfinal.setAttribute(0, true);
+		cfinal.setAttribute(1, true);
+		cfinal.setAttribute(2, true);
+		cfinal.setAttribute(4, true);
+		cfinal.setAttribute(5, true);
+		
+		NumericalAttributes nfinal = new NumericalAttributes(10);
+		nfinal.setAttribute(4, 100);
+		nfinal.setAttribute(5, 50);
+
+		Assert.assertEquals(cfinal, agg.getCategoricalAttributes());
+		Assert.assertEquals(nfinal, agg.getNumericalAttributes());
+		
+	}
+	
+	public void testRecordAggregationOr() {
+		NumericalAttributes n1 = new NumericalAttributes(10);		
+		CategoricalAttributes c1 = new CategoricalAttributes(10);
+		c1.setAttribute(0, true);
+		c1.setAttribute(2, true);
+		c1.setAttribute(4, true);
+		c1.setAttribute(6, true);
+		
+		SimpleRecord sr = new SimpleRecord(c1, n1);
+		RecordAggregation agg = new RecordAggregation(sr);
+		CategoricalAttributes filter = new CategoricalAttributes(10);
+		filter.setAttribute(0, true);
+		filter.setAttribute(2, true);
+		
+		Assert.assertTrue(agg.hasCategoricalAttributes(filter));
+		Assert.assertFalse(agg.matchesCategoricalAttributes(filter));
+		
+		filter.setAttribute(4, true);
+		filter.setAttribute(6, true);
+		
+		Assert.assertTrue(agg.hasCategoricalAttributes(filter));
+		Assert.assertTrue(agg.matchesCategoricalAttributes(filter));
+		
+	}
+	
+	public void testRecordAggregationWithNulls() {
+		SimpleRecord sr = new SimpleRecord(100, 100);
+		RecordAggregation agg = new RecordAggregation(sr);
+		RecordAggregation aggWithNullL = new RecordAggregation(null, agg);
+		
+		Assert.assertEquals(sr.getCategoricalAttributes(), aggWithNullL.getCategoricalAttributes());
+		Assert.assertEquals(sr.getNumericalAttributes(), aggWithNullL.getNumericalAttributes());
+		
+		RecordAggregation aggWithNullR = new RecordAggregation(agg, null);
+		
+		Assert.assertEquals(sr.getCategoricalAttributes(), aggWithNullR.getCategoricalAttributes());
+		Assert.assertEquals(sr.getNumericalAttributes(), aggWithNullR.getNumericalAttributes());
+		
+		
+	}
+	
+	
 }

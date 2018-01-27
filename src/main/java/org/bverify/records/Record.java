@@ -15,6 +15,11 @@ import java.util.Date;
  *
  */
 public interface Record extends Serializable {
+	
+	/**
+	 * @param other
+	 */
+	public Record deepCopy();
 
 	/**
 	 * Returns a copy of the categorical attributes of this record
@@ -31,42 +36,11 @@ public interface Record extends Serializable {
 	public NumericalAttributes getNumericalAttributes();
 	
 	/**
-	 * Get the total amount of goods referenced in this record. These
-	 * could be loaned, deposited, withdrawn, etc
-	 * @return
-	 */
-	public int getTotalAmount();
-	
-	/**
-	 * Get the net change in the number of units stored by the warehouse reflected
-	 * by this record
-	 * @return
-	 */
-	public int getNetChange();
-		
-	/**
-	 * Get the type of good referenced in this record. 
-	 * For now goods are identified by a string
-	 * @return
-	 */
-	public String getTypeOfGood();
-	
-	/**
-	 * Returns true if the record has been signed by the required parties
-	 * and false if it has not been signed
-	 * @return
-	 */
-	public boolean isSigned();
-	
-	/**
 	 * Returns true if the record, as a whole is valid
-	 * and false if it is invalid 
-	 * 
-	 * TODO: define what makes a record valid v.s. invalid
+	 * and false if it is invalid. 
 	 * @return
 	 */
 	public boolean isValid();
-	
 	
 	/**
 	 * Returns the date the record was created 
@@ -74,19 +48,12 @@ public interface Record extends Serializable {
 	 */
 	public Date dateCreated();
 	
-	
 	/**
 	 * Set the date of creation of a record.
 	 * @param date - the date of creation
 	 */
 	public void setDateCreated(Date date);
 	
-	/**
-	 * Get the signed portion of the record
-	 * @return
-	 */
-	public byte[] getSignedPortion();
-
 }
 
 

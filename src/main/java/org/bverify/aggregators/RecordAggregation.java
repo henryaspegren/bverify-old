@@ -125,14 +125,19 @@ public class RecordAggregation implements Serializable {
 		CategoricalAttributes categoricalLeft, categoricalRight;
 		byte[] hashLeft, hashRight;
 		
+		// they should not both be null
+		assert(!(leftagg == null && rightagg == null));
+		
 		if(leftagg != null) {
 			numericalLeft = leftagg.getNumericalAttributes();
 			categoricalLeft = leftagg.getCategoricalAttributes();
 			hashLeft = leftagg.getHash();
 		}
 		else {
-			numericalLeft = new NumericalAttributes();
-			categoricalLeft = new CategoricalAttributes();
+			numericalLeft = new NumericalAttributes(rightagg.getNumericalAttributes().
+					numberOfAttributes());
+			categoricalLeft = new CategoricalAttributes(rightagg.getCategoricalAttributes()
+					.numberOfAttributes());
 			hashLeft = RecordAggregation.NULL_HASH;
 		}
 		if(rightagg != null) {
@@ -141,12 +146,14 @@ public class RecordAggregation implements Serializable {
 			hashRight = rightagg.getHash();
 		}
 		else {
-			numericalRight = new NumericalAttributes();
-			categoricalRight = new CategoricalAttributes();
+			numericalRight = new NumericalAttributes(leftagg.getNumericalAttributes()
+					.numberOfAttributes());
+			categoricalRight = new CategoricalAttributes(leftagg.getCategoricalAttributes()
+					.numberOfAttributes());
 			hashRight = RecordAggregation.NULL_HASH;
 		}
 		
-		// ADD the numerical attributes 
+		// ADD the numerical attributes
 		this.numericalAttributes = numericalLeft.add(numericalRight);
 		
 		// OR the categorical attributes
@@ -166,6 +173,17 @@ public class RecordAggregation implements Serializable {
 		return new NumericalAttributes(this.numericalAttributes);
 	}
 	
+	public boolean hasCategoricalAttributes(CategoricalAttributes filter) {
+		CategoricalAttributes andRes = this.categoricalAttributes.and(filter);
+		// if and is equal to filter than this categorical attributes
+		// has 1 for all of the 1s in filters
+		return andRes.equals(filter);
+	}
+	
+	public boolean matchesCategoricalAttributes(CategoricalAttributes match) {
+		return this.categoricalAttributes.equals(match);
+	}
+	
 	public int getTotalAmount() {
 		return this.numericalAttributes.getAttribute(0);
 	}
@@ -181,10 +199,16 @@ public class RecordAggregation implements Serializable {
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
+		sb.append("<RecordAggregation: ");
+		sb.append("|");
 		sb.append(this.categoricalAttributes);
-		sb.append(System.getProperty("line.separator"));
+		sb.append("|");
 		sb.append(this.numericalAttributes);
+		sb.append("|");
 		sb.append("Hash: ");
+		sb.append("\t");
+		sb.append(">");
+
 		try {
 			sb.append(new String(this.hash, "UTF-8"));
 		} catch (UnsupportedEncodingException e) {

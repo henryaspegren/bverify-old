@@ -41,7 +41,6 @@ public class RecordTest extends TestCase {
 	public void testDepositEquality(){
 
 		Deposit dep1 = new Deposit(goodCorn, 100, alice, bob);
-		
 		Deposit dep2 = new Deposit(goodCorn, 100, alice, bob);
 		Deposit dep3 = new Deposit(goodWheat, 100, alice, bob);
 		Deposit dep4 = new Deposit(goodCorn, 100, bob, alice);
@@ -89,6 +88,13 @@ public class RecordTest extends TestCase {
 		dep.signEmployee();
 		dep.signRecipient();
 		System.out.println(dep);
+	}
+	
+	public void testSimpleRecord() {
+		SimpleRecord sr = new SimpleRecord(10, 10);
+		System.out.println(sr);
+		Assert.assertEquals(10, sr.getCategoricalAttributes().numberOfAttributes());
+		Assert.assertEquals(10, sr.getNumericalAttributes().numberOfAttributes());
 	}
 	
 }

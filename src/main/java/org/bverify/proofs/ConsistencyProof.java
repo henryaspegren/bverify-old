@@ -11,6 +11,12 @@ import edu.rice.historytree.HistoryTree;
 import edu.rice.historytree.ProofError;
 import edu.rice.historytree.storage.ArrayStore;
 
+/**
+ * Proves that a series of commitments are <i>historically consistent</i>
+ * with one another - that is that records have only been added (append-only).
+ * @author henryaspegren
+ *
+ */
 public class ConsistencyProof implements Proof {
 	
 	private final int startingCommitmentNumber;
@@ -29,10 +35,6 @@ public class ConsistencyProof implements Proof {
 		int lastCmtRecordNumber = commitmentRecordNumbers.get(commitmentRecordNumbers.size()-1);
 		this.proofTree = tree.makePruned(store, lastCmtRecordNumber);
 	
-		// add in the required paths to reproduce the 
-		// previous commitments
-		// TODO: this is inefficient - adds a lot more 
-		// entires than what we need!
 		for(int cmtRecordNumber : commitmentRecordNumbers) {
 			cmtRecordNumbers.add(cmtRecordNumber);
 			this.proofTree.copyV(tree, cmtRecordNumber, false);
