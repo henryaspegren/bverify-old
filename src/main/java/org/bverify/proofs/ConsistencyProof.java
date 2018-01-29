@@ -19,6 +19,7 @@ import edu.rice.historytree.storage.ArrayStore;
  */
 public class ConsistencyProof implements Proof {
 	
+	private static final long serialVersionUID = 1L;
 	private final int startingCommitmentNumber;
 	private final List<Integer> cmtRecordNumbers;
 	private final HistoryTree<RecordAggregation, Record> proofTree;

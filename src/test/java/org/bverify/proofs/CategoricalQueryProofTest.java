@@ -20,9 +20,6 @@ import edu.rice.historytree.storage.ArrayStore;
 public class CategoricalQueryProofTest {
 
 	public static final List<SimpleRecord> simplerecords = new ArrayList<SimpleRecord>();
-
-
-	
 	@BeforeClass
 	public static void setup() {
 		// entry 0 has attribute 0 true

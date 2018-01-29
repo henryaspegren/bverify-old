@@ -21,6 +21,7 @@ import edu.rice.historytree.storage.ArrayStore;
  */
 public class CategoricalQueryProof implements Proof {
 
+	private static final long serialVersionUID = 1L;
 	private final HistoryTree<RecordAggregation, Record> proofTree;
 	private CategoricalAttributes filter;
 	private final List<Integer> matchingRecordNumbers;

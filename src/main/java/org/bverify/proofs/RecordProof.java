@@ -10,6 +10,7 @@ import edu.rice.historytree.storage.ArrayStore;
 
 public class RecordProof implements Proof {
 	
+	private static final long serialVersionUID = 1L;
 	private final int recordNumber;
 	private final int commitmentNumber;
 	private final int commitmentRecordNumber;

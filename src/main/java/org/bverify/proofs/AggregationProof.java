@@ -4,8 +4,10 @@ import java.util.Arrays;
 
 import org.bverify.aggregators.RecordAggregation;
 
+
 public class AggregationProof implements Proof {
 	
+	private static final long serialVersionUID = 1L;
 	private final RecordAggregation mainAgg;
 	private final byte[] leftPreImageHash;
 	private final byte[] rightPreImageHash;
