@@ -206,14 +206,12 @@ public class RecordAggregation implements Serializable {
 		sb.append(this.numericalAttributes);
 		sb.append("|");
 		sb.append("Hash: ");
-		sb.append("\t");
-		sb.append(">");
-
 		try {
 			sb.append(new String(this.hash, "UTF-8"));
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}
+		sb.append(">");
 		return sb.toString();
 	}
 	

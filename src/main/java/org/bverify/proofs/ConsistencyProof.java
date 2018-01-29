@@ -1,9 +1,14 @@
 package org.bverify.proofs;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.lang3.SerializationUtils;
+import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
 import org.bverify.records.Record;
 
@@ -20,9 +25,9 @@ import edu.rice.historytree.storage.ArrayStore;
 public class ConsistencyProof implements Proof {
 	
 	private static final long serialVersionUID = 1L;
-	private final int startingCommitmentNumber;
-	private final List<Integer> cmtRecordNumbers;
-	private final HistoryTree<RecordAggregation, Record> proofTree;
+	private int startingCommitmentNumber;
+	private List<Integer> cmtRecordNumbers;
+	private HistoryTree<RecordAggregation, Record> proofTree;
 	
 	public ConsistencyProof(int startingCommitmentNumber,
 			List<Integer> commitmentRecordNumbers, 
@@ -76,8 +81,35 @@ public class ConsistencyProof implements Proof {
 	
 	@Override
 	public int getSizeInBytes() {
-		// TODO Auto-generated method stub
-		return 0;
+		return SerializationUtils.serialize(this).length;
+	}
+
+	
+
+	/**
+	 * Special Serilization is needed so we don't send the whole proof tree.
+	 * Any value that can be recalculated on the client side 
+	 * is committed - this reduces the space required for the proof AND 
+	 * makes sure that the client recomputes the values to check the validity 
+	 * of the proof.
+	 * @param oos
+	 * @throws IOException
+	 */
+	private void writeObject(ObjectOutputStream oos) throws IOException {
+		oos.writeObject(this.startingCommitmentNumber);
+		oos.writeObject(this.cmtRecordNumbers);
+		// now we don't want to send the actual proof tree 
+		// because it contains values that will be recalculated on the client side 
+		oos.writeObject(this.proofTree.serializeTree());
+	}
+	
+	private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
+		this.startingCommitmentNumber = (int) ois.readObject();
+		this.cmtRecordNumbers = (List<Integer>) ois.readObject();
+		// read in the serialized tree 
+		this.proofTree = new HistoryTree<RecordAggregation, Record>(
+				new CryptographicRecordAggregator(), new ArrayStore<RecordAggregation, Record>());
+		this.proofTree.parseTree((byte[]) ois.readObject());
 	}
 
 }

@@ -1,6 +1,14 @@
 package org.bverify.proofs;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.util.List;
+
+import org.apache.commons.lang3.SerializationUtils;
+import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
+import org.bverify.records.CategoricalAttributes;
 import org.bverify.records.Record;
 import org.spongycastle.util.Arrays;
 
@@ -11,21 +19,20 @@ import edu.rice.historytree.storage.ArrayStore;
 public class RecordProof implements Proof {
 	
 	private static final long serialVersionUID = 1L;
-	private final int recordNumber;
-	private final int commitmentNumber;
-	private final int commitmentRecordNumber;
-	private final HistoryTree<RecordAggregation, Record> proofTree;
-	private final ArrayStore<RecordAggregation, Record> newdatastore;
+	private int recordNumber;
+	private int commitmentNumber;
+	private int commitmentRecordNumber;
+	private HistoryTree<RecordAggregation, Record> proofTree;
 
 	public RecordProof(int recordNumber, int commitmentNumber, 
 			int commitmentRecordNumber, HistoryTree<RecordAggregation, Record> recordTree) throws ProofError {
 		this.recordNumber = recordNumber;
 		this.commitmentNumber = commitmentNumber;
 		this.commitmentRecordNumber = commitmentRecordNumber;
-		this.newdatastore = new ArrayStore<RecordAggregation, Record>();
+		ArrayStore<RecordAggregation, Record> newdatastore = new ArrayStore<RecordAggregation, Record>();
 		
 		// fixed - proof now is minimal and optimal, no extra paths
-		this.proofTree = recordTree.makePruned(this.newdatastore, commitmentRecordNumber);
+		this.proofTree = recordTree.makePruned(newdatastore, commitmentRecordNumber);
 				
 		this.proofTree.copyV(recordTree, recordNumber, true);	
 	}
@@ -64,8 +71,38 @@ public class RecordProof implements Proof {
 	
 	@Override
 	public int getSizeInBytes() {
-		// TODO Auto-generated method stub
-		return 0;
+		return SerializationUtils.serialize(this).length;
+	}
+	
+
+	/**
+	 * Special Serilization is needed so we don't send the whole proof tree.
+	 * Any value that can be recalculated on the client side 
+	 * is committed - this reduces the space required for the proof AND 
+	 * makes sure that the client recomputes the values to check the validity 
+	 * of the proof.
+	 * @param oos
+	 * @throws IOException
+	 */
+	private void writeObject(ObjectOutputStream oos) throws IOException {
+		oos.writeObject(this.recordNumber);
+		oos.writeObject(this.commitmentNumber);
+		oos.writeObject(this.commitmentRecordNumber);
+		// now we don't want to send the actual proof tree 
+		// because it contains values that will be recalculated on the client side 
+		oos.writeObject(this.proofTree.serializeTree());
+	}
+	
+	private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {
+		this.recordNumber = (int) ois.readObject();
+		this.commitmentNumber = (int) ois.readObject();
+		this.commitmentRecordNumber = (int) ois.readObject();
+		
+		// read in the serialized tree 
+		this.proofTree = new HistoryTree<RecordAggregation, Record>(
+				new CryptographicRecordAggregator(), new ArrayStore<RecordAggregation, Record>());
+		this.proofTree.parseTree((byte[]) ois.readObject());
+		
 	}
 
 }

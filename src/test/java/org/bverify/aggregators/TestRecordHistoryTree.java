@@ -46,9 +46,7 @@ public class TestRecordHistoryTree {
 		
 		HistoryTree<RecordAggregation, Record> histtreeFromBytes = new HistoryTree<RecordAggregation, Record>(
 				aggregatorFromBytes, storeFromBytes);
-		
-		histtreeFromBytes.updateTime(version);
-		
+				
 		histtreeFromBytes.parseTree(asByte);
 		
 		// check that they have the same aggregation

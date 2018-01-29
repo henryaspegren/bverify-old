@@ -2,6 +2,7 @@ package org.bverify.proofs;
 
 import java.util.Arrays;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.aggregators.RecordAggregation;
 
 
@@ -55,7 +56,7 @@ public class AggregationProof implements Proof {
 
 	@Override
 	public int getSizeInBytes() {
-		return 0;
+		return SerializationUtils.serialize(this).length;
 	}
 	
 	@Override 
@@ -79,5 +80,6 @@ public class AggregationProof implements Proof {
 		}
 		return false;
 	}
+
 
 }

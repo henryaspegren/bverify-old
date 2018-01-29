@@ -3,6 +3,7 @@ package org.bverify.proofs;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
 import org.bverify.records.CategoricalAttributes;
@@ -130,7 +131,76 @@ public class CategoricalQueryProofTest {
 	}
 	
 	
+	@Test
+	public void testSerilizingProofCorrect() {
+		CryptographicRecordAggregator cgr = new CryptographicRecordAggregator();
+		ArrayStore<RecordAggregation, Record> store = new ArrayStore<RecordAggregation, Record>();
+		HistoryTree<RecordAggregation, Record> tree = new HistoryTree<RecordAggregation, Record>(cgr, store);
+		for(SimpleRecord sr : simplerecords) {
+			tree.append(sr);
+		}
+		CategoricalAttributes filter = new CategoricalAttributes(10);
+		filter.setAttribute(0, true);
+		filter.setAttribute(6, true);
+		try {
+			CategoricalQueryProof catqproof = new CategoricalQueryProof(filter, tree,
+					1, 9);
+			byte[] proofAsBytes = SerializationUtils.serialize(catqproof);
+			CategoricalQueryProof proofFromBytes = (CategoricalQueryProof) SerializationUtils.deserialize(proofAsBytes);
+			
+			Assert.assertEquals(1, proofFromBytes.getCommitmentNumber());
+			
+			List<Integer> correctRecordNumbers = new ArrayList<Integer>();
+			correctRecordNumbers.add(6);
+			correctRecordNumbers.add(7);
+			correctRecordNumbers.add(8);
+			correctRecordNumbers.add(9);
+			
+			
 	
+			Assert.assertEquals(correctRecordNumbers, proofFromBytes.getRecordNumbers());	
+			
+			Assert.assertEquals(simplerecords.subList(6, 10),
+					proofFromBytes.getRecords());
+			
+			// proof should evaluate to true
+			Assert.assertTrue(proofFromBytes.checkProof(tree.aggV(9).getHash()));
+			
+		} catch (ProofError e) {
+			Assert.fail("Proof error");
+			e.printStackTrace();
+		}
+	}
+	
+	
+	@Test
+	public void testSerilizingProofInorrect() {
+		CryptographicRecordAggregator cgr = new CryptographicRecordAggregator();
+		ArrayStore<RecordAggregation, Record> store = new ArrayStore<RecordAggregation, Record>();
+		HistoryTree<RecordAggregation, Record> tree = new HistoryTree<RecordAggregation, Record>(cgr, store);
+		for(SimpleRecord sr : simplerecords) {
+			tree.append(sr);
+		}
+		CategoricalAttributes filter = new CategoricalAttributes(10);
+		filter.setAttribute(0, true);
+		filter.setAttribute(3, true);
+		try {
+			CategoricalQueryProof catqproof = new CategoricalQueryProof(filter, tree,
+					1, 9);
+			CategoricalAttributes fakeFilter = new CategoricalAttributes(filter);
+			// and entire subtree is omitted!
+			fakeFilter.setAttribute(9, true);
+			catqproof.swapOutCategoricalAttributes(fakeFilter);
+			byte[] proofAsBytes = SerializationUtils.serialize(catqproof);
+			CategoricalQueryProof proofFromBytes = (CategoricalQueryProof) SerializationUtils.deserialize(proofAsBytes);
+			// proof should evaluate to false
+			Assert.assertFalse(proofFromBytes.checkProof(tree.aggV(9).getHash()));
+			
+		} catch (ProofError e) {
+			Assert.fail("Proof error");
+			e.printStackTrace();
+		}
+	}
 	
 	
 }
