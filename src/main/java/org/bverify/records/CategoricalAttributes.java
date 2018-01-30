@@ -54,6 +54,20 @@ public class CategoricalAttributes implements Serializable {
 	}
 	
 	/**
+	 * Checks to see if this categorical attributes 
+	 * has all of the attributes in the filter (satisfies 
+	 * the filter)
+	 * @param filter
+	 * @return
+	 */
+	public boolean hasAttributes(CategoricalAttributes filter) {
+		CategoricalAttributes andRes = this.and(filter);
+		// if and is equal to filter than this categorical attributes
+		// has 1 for all of the 1s in filters
+		return andRes.equals(filter);
+	}
+	
+	/**
 	 * Creates a new categorical attributes by logically ORing this 
 	 * categorical attribute with another set of categorical attributes.
 	 * An attribute will be set to true if it is true in this or in the other. Must 

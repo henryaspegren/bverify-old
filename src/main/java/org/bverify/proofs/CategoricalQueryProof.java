@@ -117,6 +117,7 @@ public class CategoricalQueryProof implements Proof {
 	public int getSizeInBytes() {
 		return SerializationUtils.serialize(this).length;
 	}
+	
 
 	@Override
 	public String toString() {
@@ -129,6 +130,7 @@ public class CategoricalQueryProof implements Proof {
 		message.append(this.proofTree);
 		return message.toString();
 	}
+	
 
 	/**
 	 * FOR TESTING PURPOSES ONLY - Can create invalid proofs!
@@ -157,8 +159,6 @@ public class CategoricalQueryProof implements Proof {
 		// now we don't want to send the actual proof tree 
 		// because it contains values that will be recalculated on the client side 
 		oos.writeObject(this.proofTree.serializeTree());
-		
-		System.out.println(this);
 	}
 	
 	private void readObject(ObjectInputStream ois) throws ClassNotFoundException, IOException {

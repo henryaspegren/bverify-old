@@ -28,6 +28,11 @@ public class NumericalAttributes implements Serializable {
 		this.representation = new int[DEFAULT_NUM_NUMERICAL_ATTRIBUTES];
 	}
 	
+	/**
+	 * Creates a new set of numerical attributes that are all 
+	 * initialized to zero.
+	 * @param numberAttributes
+	 */
 	public NumericalAttributes(int numberAttributes) {
 		this.representation = new int[numberAttributes];
 	}

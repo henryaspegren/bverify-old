@@ -94,6 +94,25 @@ def plotHistoryTreeSize():
 	plt.legend(loc='upper left')
 	
 	plt.show()
+	
+################################
+### Categorical Query Proof Size 
+################################
+
+filename = os.path.join(os.path.dirname(os.getcwd()), "benchmarking/query_proof_unsorted_size.csv")
+res = pd.read_csv(filename)
+
+print(res)
+
+fig, ax = plt.subplots()
+
+ax.scatter(res['NumberOfRecordsMatching'], res['ProofSize'], color='red', marker='^')
+ax.scatter(res['NumberOfRecordsMatching'], res['SizeOfRecordsMatching'], color='blue', marker='o')
+ax.axhline(y=res['SizeOfRecordsAll'][0],c="black",linewidth=0.5, linestyle='--')
+ax.axhline(y=res['SizeOfProofAll'][0],c="black",linewidth=0.5)
+
+plt.show()
 
 
-plotRecordAggregationSize()	
+
+

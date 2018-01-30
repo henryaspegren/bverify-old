@@ -21,7 +21,8 @@ public class SimpleRecord implements Record {
 	public static int MAX_NUM = 100;
 	public static int MIN_NUM = -100;
 	
-	public static Random prng = new Random();
+	// set a seed
+	public static Random prng = new Random(10401);
 		
 	
 	/**
@@ -36,7 +37,6 @@ public class SimpleRecord implements Record {
 	public SimpleRecord(int numNumericalAttributes, int numCategoricalAttributes) {
 		this.numericalAttributes = new NumericalAttributes(numNumericalAttributes);
 		this.categoricalAttributes = new CategoricalAttributes(numCategoricalAttributes);
-		
 		for(int i = 0; i < numNumericalAttributes; i++) {
 			int randomInt = ThreadLocalRandom.current().nextInt(MIN_NUM, MAX_NUM + 1);
 			boolean randomBoolean = prng.nextBoolean();

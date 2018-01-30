@@ -174,10 +174,7 @@ public class RecordAggregation implements Serializable {
 	}
 	
 	public boolean hasCategoricalAttributes(CategoricalAttributes filter) {
-		CategoricalAttributes andRes = this.categoricalAttributes.and(filter);
-		// if and is equal to filter than this categorical attributes
-		// has 1 for all of the 1s in filters
-		return andRes.equals(filter);
+		return this.categoricalAttributes.hasAttributes(filter);
 	}
 	
 	public boolean matchesCategoricalAttributes(CategoricalAttributes match) {

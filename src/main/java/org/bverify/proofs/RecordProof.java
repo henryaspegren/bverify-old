@@ -3,12 +3,10 @@ package org.bverify.proofs;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.List;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
-import org.bverify.records.CategoricalAttributes;
 import org.bverify.records.Record;
 import org.spongycastle.util.Arrays;
 
