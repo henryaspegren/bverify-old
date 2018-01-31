@@ -10,8 +10,11 @@ import org.bouncycastle.util.Arrays;
 import org.bverify.records.CategoricalAttributes;
 import org.bverify.records.NumericalAttributes;
 import org.bverify.records.Record;
+import org.bverify.serialization.BverifySerialization;
 
 import com.google.common.primitives.Ints;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 /**
  * Represents a recursive aggregation of records. 
@@ -49,17 +52,17 @@ public class RecordAggregation implements Serializable {
 	/**
 	 * Numerical Attributes
 	 */
-	private final NumericalAttributes numericalAttributes;
+	private NumericalAttributes numericalAttributes;
 	
 	/**
 	 * Categorical Attributes 
 	 */
-	private final CategoricalAttributes categoricalAttributes;
+	private CategoricalAttributes categoricalAttributes;
 	
 	/**
 	 * Summary Hash
 	 */
-	private final byte[] hash;
+	private byte[] hash;
 	
 	/**
 	 * Creates an empty record aggregation
@@ -263,6 +266,21 @@ public class RecordAggregation implements Serializable {
 	public static RecordAggregation modifyRecordAggregation(RecordAggregation prevAgg,
 			int newTotal, int newNet) {
 		return new RecordAggregation(newTotal, newNet, prevAgg.getHash());
+	}
+	
+	public byte[] serializatRecordAggregation() {
+		BverifySerialization.RecordAggregation.Builder builder = BverifySerialization.RecordAggregation.newBuilder();
+		builder.setCategoricalAttributes(this.categoricalAttributes.serializeCategoricalAttributes());
+		builder.setHash(ByteString.copyFrom(this.hash));
+		builder.setNumericalAttributes(this.numericalAttributes.serializeNumericalAttributes());
+		return builder.build().toByteArray();
+	}
+	
+	public void parseFrom(byte[] data) throws InvalidProtocolBufferException {
+		BverifySerialization.RecordAggregation message = BverifySerialization.RecordAggregation.parseFrom(data);
+		this.categoricalAttributes = CategoricalAttributes.parseCategoricalAttributes(message.getCategoricalAttributes().toByteArray());
+		this.numericalAttributes = NumericalAttributes.parseNumericalAttributes(message.getNumericalAttributes().toByteArray());
+		this.hash = message.getHash().toByteArray();
 	}
 	
 }

@@ -1,0 +1,30 @@
+syntax = "proto2";
+
+package serialization;
+
+option java_package = "org.bverify.serialization";
+option java_outer_classname = "BverifySerialization";
+
+
+message NumericalAttributes {
+	repeated int32 attributes = 1;
+}
+
+message CategoricalAttributes {
+	required bytes attributes = 1;
+	required int32 size  = 2;
+}
+
+message RecordAggregation {
+	required NumericalAttributes numericalAttributes = 1;
+	required CategoricalAttributes categoricalAttributes = 2;
+	required bytes hash = 3;
+}
+
+message Record {
+	required NumericalAttributes numericalAttributes = 1;
+	required CategoricalAttributes categoricalAttributes = 2;
+	required int64 dateCreated = 3;
+	optional bytes otherData = 4;
+}
+

@@ -99,5 +99,17 @@ public class Withdrawal extends Change {
 		wd.dateCreated = this.dateCreated;
 		return wd;
 	}
+
+	@Override
+	public byte[] serializeRecord() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void parseFrom(byte[] data) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }

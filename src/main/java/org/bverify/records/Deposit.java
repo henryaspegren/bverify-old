@@ -101,4 +101,18 @@ public class Deposit extends Change {
 		return dep;
 	}
 
+
+	@Override
+	public byte[] serializeRecord() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public void parseFrom(byte[] data) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }

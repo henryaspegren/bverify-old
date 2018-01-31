@@ -3,6 +3,11 @@ package org.bverify.records;
 import java.io.Serializable;
 import java.util.BitSet;
 
+import org.bverify.serialization.BverifySerialization;
+
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+
 /**
  * Wrapper class for manipulating categorical attributes
  * For now the categorical attributes are indexed by  
@@ -48,6 +53,27 @@ public class CategoricalAttributes implements Serializable {
 	public void setAttribute(int attributeIdx, boolean value) {
 		this.representation.set(attributeIdx, value);
 	}
+	
+	
+	public BverifySerialization.CategoricalAttributes serializeCategoricalAttributes(){
+		BverifySerialization.CategoricalAttributes.Builder res = BverifySerialization.CategoricalAttributes.newBuilder();
+		res.setAttributes(ByteString.copyFrom(this.representation.toByteArray()));
+		res.setSize(this.size);
+		return res.build();
+	}
+	
+	public static CategoricalAttributes parseCategoricalAttributes(byte[] data) throws InvalidProtocolBufferException {
+		BverifySerialization.CategoricalAttributes message = BverifySerialization.CategoricalAttributes.parseFrom(data);
+		ByteString bitsetbytes = message.getAttributes();
+		BitSet bitset = BitSet.valueOf(bitsetbytes.toByteArray());
+		int size = message.getSize();
+		CategoricalAttributes res = new CategoricalAttributes(size);
+		for(int i = 0; i < res.numberOfAttributes(); i++) {
+			res.setAttribute(i, bitset.get(i));
+		}
+		return res;
+	}
+	
 	
 	public byte[] toByteArray() {
 		return this.representation.toByteArray();

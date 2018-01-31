@@ -2,8 +2,10 @@ package org.bverify.aggregators;
 
 import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.records.Record;
+import org.bverify.records.SimpleRecord;
 
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 import edu.rice.historytree.AggregationInterface;
 
@@ -58,25 +60,38 @@ public class CryptographicRecordAggregator implements AggregationInterface<Recor
 	 * TODO: Port to google protobuf
 	 */
 	public ByteString serializeVal(Record val) {
-		byte[] byteRep = SerializationUtils.serialize(val);
+		byte[] byteRep = val.serializeRecord();
 		return ByteString.copyFrom(byteRep);
 	}
 
 	public ByteString serializeAgg(RecordAggregation agg) {
-		byte[] byteRep = SerializationUtils.serialize(agg);
+		byte[] byteRep = agg.serializatRecordAggregation();
 		return ByteString.copyFrom(byteRep);
 	}
 
 
 	public RecordAggregation parseAgg(ByteString b) {
-		RecordAggregation recordAgg = (RecordAggregation) SerializationUtils.deserialize(b.toByteArray());
+		RecordAggregation recordAgg = new RecordAggregation();
+		try {
+			recordAgg.parseFrom(b.toByteArray());
+		} catch (InvalidProtocolBufferException e) {
+			e.printStackTrace();
+		}
 		return recordAgg;
 		
 	}
 
 	public Record parseVal(ByteString b) {
-		Record record = (Record) SerializationUtils.deserialize(b.toByteArray());
-		return record;
+		// TODO FIX THIS - Needs to be able to parse records of all types
+		// type inference needed
+		SimpleRecord sr = new SimpleRecord(1, 1);
+		try {
+			sr.parseFrom(b.toByteArray());
+		} catch (InvalidProtocolBufferException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return sr;
 	}
 
 	public AggregationInterface<RecordAggregation, Record> clone() {

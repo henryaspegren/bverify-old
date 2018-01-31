@@ -171,4 +171,16 @@ public class Transfer extends RecordBase  {
 		tf.dateCreated = this.dateCreated;
 		return tf;
 	}
+
+	@Override
+	public byte[] serializeRecord() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void parseFrom(byte[] data) {
+		// TODO Auto-generated method stub
+		
+	}
 }

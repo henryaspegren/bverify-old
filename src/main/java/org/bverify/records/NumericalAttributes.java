@@ -3,6 +3,10 @@ package org.bverify.records;
 import java.io.Serializable;
 import java.util.Arrays;
 
+import org.bverify.serialization.BverifySerialization;
+
+import com.google.protobuf.InvalidProtocolBufferException;
+
 /**
  * Wrapper class for manipulating numerical attributes
  * For now the numerical attributes are indexed by
@@ -75,6 +79,25 @@ public class NumericalAttributes implements Serializable {
 	@Override
 	public int hashCode() {
 		return Arrays.hashCode(this.representation);
+	}
+	
+	public BverifySerialization.NumericalAttributes serializeNumericalAttributes(){
+		BverifySerialization.NumericalAttributes.Builder res = BverifySerialization.NumericalAttributes.newBuilder();
+		for(int i = 0; i < this.representation.length; i++) {
+			res.addAttributes(this.representation[i]);
+		}
+		return res.build();
+	}
+	
+	public static NumericalAttributes parseNumericalAttributes(byte[] data) throws InvalidProtocolBufferException {
+		BverifySerialization.NumericalAttributes message = BverifySerialization.NumericalAttributes.parseFrom(data);
+		int size  = message.getAttributesCount();
+		NumericalAttributes numAtts = new NumericalAttributes(size);
+		for(int i = 0; i < size; i++) {
+			numAtts.setAttribute(i, message.getAttributes(i));
+		}
+		return numAtts;
+
 	}
 	
 	@Override

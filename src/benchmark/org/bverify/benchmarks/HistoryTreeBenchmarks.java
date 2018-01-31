@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Random;
 
 import org.apache.commons.csv.CSVFormat;
@@ -156,10 +157,42 @@ public class HistoryTreeBenchmarks {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		simpleRecordSizes(10000, "./analysis/benchmarking/simple_record_size.csv");
-		recordAggregationSizes(10000, "./analysis/benchmarking/record_aggregation_size.csv");
-		fullHistoryTreeSizes(40000, 1000, "./analysis/benchmarking/full_history_tree_size.csv");
-		prunedHistoryTree(40000, 1000, "./analysis/benchmarking/pruned_history_tree_size.csv");
+		//simpleRecordSizes(10000, "./analysis/benchmarking/simple_record_size.csv");
+		//recordAggregationSizes(10000, "./analysis/benchmarking/record_aggregation_size.csv");
+		//fullHistoryTreeSizes(40000, 1000, "./analysis/benchmarking/full_history_tree_size.csv");
+		//prunedHistoryTree(40000, 1000, "./analysis/benchmarking/pruned_history_tree_size.csv");
+		
+		
+		SimpleRecord sr = new SimpleRecord(1, 1);
+		int srlength = sr.serializeRecord().length;
+		System.out.println(sr);
+		System.out.println("SIMPLE RECORD - "+srlength);
+				
+		CryptographicRecordAggregator cagg = new CryptographicRecordAggregator();
+		RecordAggregation recordAgg = cagg.aggVal(sr);
+		System.out.println("AGG(SIMPLE RECORD) - "+recordAgg.serializatRecordAggregation().length);
+		
+		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
+		ArrayStore<RecordAggregation, Record> store = new ArrayStore<RecordAggregation,Record>();    
+		HistoryTree<RecordAggregation, Record> histtree = new HistoryTree<RecordAggregation, Record>(aggregator, store);		
+		ArrayList<Record> listOfRecords = new ArrayList<Record>();
+		int totalRecordSerialization = 0;
+		for(int i = 0; i < 100000; i++) {
+			SimpleRecord newsr = new SimpleRecord(1, 1);
+			totalRecordSerialization = totalRecordSerialization+  newsr.serializeRecord().length;
+			histtree.append(newsr);
+			listOfRecords.add(newsr);
+		}
+		System.out.println("TOTAL RECORDS: "+totalRecordSerialization);
+		int length = histtree.serializeTree().length;
+		int lengthList = SerializationUtils.serialize(listOfRecords).length;
+		System.out.println("HISTORY TREE<"+histtree.version()+">: " +length + 
+				" - "+length/(double) totalRecordSerialization);
+		System.out.println("LIST<"+listOfRecords.size()+">: "+ lengthList + 
+				" - "+lengthList/(double) totalRecordSerialization);
+				
+	
+
 		
 	}
 	

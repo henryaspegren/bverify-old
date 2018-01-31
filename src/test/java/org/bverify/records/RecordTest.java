@@ -9,6 +9,8 @@ import junit.framework.Test;
 
 import org.junit.Assert;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+
 
 public class RecordTest extends TestCase {
 	
@@ -95,6 +97,44 @@ public class RecordTest extends TestCase {
 		System.out.println(sr);
 		Assert.assertEquals(10, sr.getCategoricalAttributes().numberOfAttributes());
 		Assert.assertEquals(10, sr.getNumericalAttributes().numberOfAttributes());
+	}
+	
+	public void testCategoricalAttributesSerialization() {
+		try {
+			CategoricalAttributes catats = new CategoricalAttributes(13);
+			catats.setAttribute(1, true);
+			catats.setAttribute(8, true);
+			CategoricalAttributes fromBytes = CategoricalAttributes.parseCategoricalAttributes(
+					catats.serializeCategoricalAttributes().toByteArray());
+			Assert.assertTrue(catats.equals(fromBytes));
+		}catch(InvalidProtocolBufferException e ) {
+			e.printStackTrace();
+			Assert.fail();
+		}
+	}
+	
+	public void testNumericalAttributesSerialization() {
+		try {
+			NumericalAttributes numatts = new NumericalAttributes(13);
+			NumericalAttributes fromBytes = NumericalAttributes.parseNumericalAttributes(
+					numatts.serializeNumericalAttributes().toByteArray());
+			Assert.assertTrue(numatts.equals(fromBytes));
+		}catch(InvalidProtocolBufferException e ) {
+			e.printStackTrace();
+			Assert.fail();
+		}
+	}
+	
+	public void testSimpleRecordSerialization() {
+		try {
+			SimpleRecord sr = new SimpleRecord(13, 13);
+			SimpleRecord srFromBytes  = new SimpleRecord(100, 100);
+			srFromBytes.parseFrom(sr.serializeRecord());
+			Assert.assertTrue(srFromBytes.equals(sr));
+		}catch(InvalidProtocolBufferException e ) {
+			e.printStackTrace();
+			Assert.fail();
+		}
 	}
 	
 }

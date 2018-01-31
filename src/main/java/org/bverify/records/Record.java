@@ -3,6 +3,8 @@ package org.bverify.records;
 import java.io.Serializable;
 import java.util.Date;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+
 
 /**
  * Interface for the records that <b>bverify</b> stores.
@@ -54,6 +56,22 @@ public interface Record extends Serializable {
 	 */
 	public void setDateCreated(Date date);
 	
+	
+	/**
+	 * Serialize the Record to a byte array
+	 * @return
+	 */
+	public byte[] serializeRecord();
+	
+	
+	/**
+	 * Parse the byte data (serialized record)
+	 * into a Record
+	 * @param data
+	 * @throws InvalidProtocolBufferException 
+	 */
+	public void parseFrom(byte[] data) throws InvalidProtocolBufferException;
+		
 }
 
 

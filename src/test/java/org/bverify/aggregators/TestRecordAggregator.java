@@ -13,6 +13,8 @@ import org.bverify.records.Transfer;
 import org.bverify.records.Withdrawal;
 import org.junit.Assert;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
@@ -337,6 +339,20 @@ CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
 		Assert.assertEquals(sr.getNumericalAttributes(), aggWithNullR.getNumericalAttributes());
 		
 		
+	}
+	
+	public void testRecordAggregationSerialization() {
+		SimpleRecord sr = new SimpleRecord(100, 100);
+		RecordAggregation agg = new RecordAggregation(sr);
+		RecordAggregation fromBytes = new RecordAggregation(new SimpleRecord(1,1));
+
+		try {
+			fromBytes.parseFrom(agg.serializatRecordAggregation());
+			Assert.assertTrue(fromBytes.equals(agg));
+		} catch (InvalidProtocolBufferException e) {
+			e.printStackTrace();
+			Assert.fail();
+		}
 	}
 	
 	

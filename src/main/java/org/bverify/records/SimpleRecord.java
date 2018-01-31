@@ -4,6 +4,10 @@ import java.util.Date;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
+import org.bverify.serialization.BverifySerialization;
+
+import com.google.protobuf.InvalidProtocolBufferException;
+
 /**
  * This is a generic record class with numeric and categorical attributes
  * @author henryaspegren
@@ -13,8 +17,8 @@ public class SimpleRecord implements Record {
 	
 	private static final long serialVersionUID = 1L;
 	
-	private final NumericalAttributes numericalAttributes;
-	private final CategoricalAttributes categoricalAttributes;
+	private NumericalAttributes numericalAttributes;
+	private CategoricalAttributes categoricalAttributes;
 	
 	private Date datecreated;
 	
@@ -42,7 +46,8 @@ public class SimpleRecord implements Record {
 			boolean randomBoolean = prng.nextBoolean();
 			this.numericalAttributes.setAttribute(i, randomInt);
 			this.categoricalAttributes.setAttribute(i, randomBoolean);
-		}	
+		}
+		this.datecreated = new Date();
 		
 		
 	}
@@ -87,6 +92,8 @@ public class SimpleRecord implements Record {
 		sb.append(this.numericalAttributes);
 		sb.append("|");
 		sb.append(this.categoricalAttributes);
+		sb.append("|");
+		sb.append(this.datecreated);
 		sb.append(">");
 		return sb.toString();
 	}
@@ -107,6 +114,23 @@ public class SimpleRecord implements Record {
 		SimpleRecord sr =  new SimpleRecord(this.categoricalAttributes, this.numericalAttributes);
 		sr.datecreated = this.datecreated;
 		return sr;
+	}
+
+	@Override
+	public byte[] serializeRecord() {
+		BverifySerialization.Record.Builder builder = BverifySerialization.Record.newBuilder();
+		builder.setCategoricalAttributes(this.categoricalAttributes.serializeCategoricalAttributes());
+		builder.setNumericalAttributes(this.numericalAttributes.serializeNumericalAttributes());
+		builder.setDateCreated(this.datecreated.getTime());
+		return builder.build().toByteArray();
+	}
+
+	@Override
+	public void parseFrom(byte[] data) throws InvalidProtocolBufferException {
+		BverifySerialization.Record message = BverifySerialization.Record.parseFrom(data);
+		this.categoricalAttributes = CategoricalAttributes.parseCategoricalAttributes(message.getCategoricalAttributes().toByteArray());
+		this.numericalAttributes = NumericalAttributes.parseNumericalAttributes(message.getNumericalAttributes().toByteArray());
+		this.datecreated = new Date(message.getDateCreated());
 	}
 	
 	
