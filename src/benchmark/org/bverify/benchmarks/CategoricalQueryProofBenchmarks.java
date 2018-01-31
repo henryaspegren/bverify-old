@@ -131,9 +131,8 @@ public class CategoricalQueryProofBenchmarks {
 	}
 
 	public static void benchmarkEfficiencyOfProof(int numberOfRecords, String fileName) {
-		double[] pvals = { 0.8, 0.5, 0.2, 0.1 };
-		int[] sortingWindows = { 0, (int) (numberOfRecords * 0.1), (int) (numberOfRecords * 0.25),
-				(int) (numberOfRecords * 0.75), numberOfRecords };
+		double[] pvals = {0.1};
+		int[] sortingWindows = { 0, numberOfRecords / 4 , numberOfRecords / 2, numberOfRecords };
 
 		CategoricalAttributes filter0 = new CategoricalAttributes(3);
 		filter0.setAttribute(0, false);

@@ -99,20 +99,36 @@ def plotHistoryTreeSize():
 ### Categorical Query Proof Size 
 ################################
 
-filename = os.path.join(os.path.dirname(os.getcwd()), "benchmarking/query_proof_unsorted_size.csv")
-res = pd.read_csv(filename)
 
-print(res)
+def plotCategoricalQueryProofSize():
+	filename = os.path.join(os.path.dirname(os.getcwd()), "benchmarking/query_proof_size.csv")
+	res = pd.read_csv(filename)
+	
+	print(res)
+	
+	fig, ax = plt.subplots()
+	
+	colors = ['red', 'purple', 'green', 'yellow', 'orange']
+	ws = np.unique(res['w'])
+	
+	for i in range(len(ws)):
+		w = ws[i]
+		color = colors[i]
+		filtered = res[res['w'] == w]
+		ax.scatter(filtered['NumberOfRecordsMatching'], filtered['ProofSize'], color=color, marker='^', label=str(w/max(ws) * 100)+ '% sorted')
+	
+	ax.scatter(filtered['NumberOfRecordsMatching'], filtered['SizeOfRecordsMatching'], color='blue', marker='o', label = "Size Of Matching Records")	
+	ax.axhline(y=res['SizeOfRecordsAll'][0],c="black",linewidth=0.5, linestyle='--', label = "Size of All Records")
+	ax.axhline(y=res['SizeOfProofAll'][0],c="black",linewidth=0.5, label = "Size of Tree Serialization With All Records")
+	
+	ax.set_title("Cateogrical Query Proof Size Benchmark")
+	ax.set_xlabel("Number Of Records Matching Query")
+	ax.set_ylabel("Size of Proof (bytes)")
+	
+	plt.legend(loc='upper left')
+	plt.show()
 
-fig, ax = plt.subplots()
 
-ax.scatter(res['NumberOfRecordsMatching'], res['ProofSize'], color='red', marker='^')
-ax.scatter(res['NumberOfRecordsMatching'], res['SizeOfRecordsMatching'], color='blue', marker='o')
-ax.axhline(y=res['SizeOfRecordsAll'][0],c="black",linewidth=0.5, linestyle='--')
-ax.axhline(y=res['SizeOfProofAll'][0],c="black",linewidth=0.5)
-
-plt.show()
-
-
+plotCategoricalQueryProofSize()
 
 
