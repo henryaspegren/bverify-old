@@ -16,7 +16,7 @@ public class BaselineStats {
 	
 	@Override
 	public String toString() {
-		return "<--Baselien Stats--->"+"\nNum Records: "+this.numberOfRecordsAll+" (Size: "+this.sizeOfRecordsAll+")\n"+
+		return "<--Baseline Stats--->"+"\nNum Records: "+this.numberOfRecordsAll+" (Size: "+this.sizeOfRecordsAll+")\n"+
 				"Num Matching Records: "+this.numberOfRecordsMatching+ "(Size: "+this.sizeOfRecordsMatching+")";
 	}
 };

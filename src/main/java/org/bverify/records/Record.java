@@ -3,6 +3,8 @@ package org.bverify.records;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.bverify.serialization.BverifySerialization;
+
 import com.google.protobuf.InvalidProtocolBufferException;
 
 
@@ -19,7 +21,8 @@ import com.google.protobuf.InvalidProtocolBufferException;
 public interface Record extends Serializable {
 	
 	/**
-	 * @param other
+	 * Make a deep copy of this record
+	 * @return
 	 */
 	public Record deepCopy();
 
@@ -71,6 +74,38 @@ public interface Record extends Serializable {
 	 * @throws InvalidProtocolBufferException 
 	 */
 	public void parseFrom(byte[] data) throws InvalidProtocolBufferException;
+	
+	
+	/**
+	 * 
+	 * @param data
+	 * @return
+	 * @throws InvalidProtocolBufferException
+	 */
+	public static Record parseRecord(byte[] data) throws InvalidProtocolBufferException {
+		BverifySerialization.Record message = BverifySerialization.Record.parseFrom(data);
+		Record newRecord;
+		switch (message.getRecordType()) {
+			case SIMPLE_RECORD:
+				newRecord = new SimpleRecord();
+				newRecord.parseFrom(data);
+				return newRecord;
+			case DEPOSIT:
+				newRecord = new Deposit();
+				newRecord.parseFrom(data);
+				return newRecord;
+			case WITHDRAWAL:
+				newRecord = new Withdrawal();
+				newRecord.parseFrom(data);
+				return newRecord;
+			case TRANSFER:
+				newRecord = new Transfer();
+				newRecord.parseFrom(data);
+				return newRecord;
+			default:
+				throw new InvalidProtocolBufferException("No serialization avaialble");
+			}
+	}
 		
 }
 

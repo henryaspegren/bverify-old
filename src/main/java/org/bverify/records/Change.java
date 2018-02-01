@@ -15,8 +15,8 @@ public abstract class Change extends RecordBase{
 	
 	protected byte[] recepientSignature;
 	protected byte[] employeeSignature;
-	protected final Account employee;
-	protected final Account recepient;
+	protected Account employee;
+	protected Account recepient;
 	
 	
 	public Change(String goodType, int netAmount, int totalAmount,
@@ -29,6 +29,10 @@ public abstract class Change extends RecordBase{
 		this.numericalAttributes.setAttribute(1, netAmount);
 	}
 	
+	public Change() {
+		super();
+	}
+
 	public Account getRecepientAccount() {
 		return this.recepient;
 	}

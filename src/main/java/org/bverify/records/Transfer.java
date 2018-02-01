@@ -8,17 +8,21 @@ import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.util.Arrays;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.accounts.Account;
+import org.bverify.serialization.BverifySerialization;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 public class Transfer extends RecordBase  {
 
 	private static final long serialVersionUID = 3L;
 	
-	private final Account sender;
-	private final Account recepient;
+	private Account sender;
+	private Account recepient;
 	private byte[] senderSignature;
 	private byte[] recepientSignature;
 		
@@ -28,6 +32,10 @@ public class Transfer extends RecordBase  {
 		this.recepient = recepient;
 		this.numericalAttributes.setAttribute(1, 0);
 		this.numericalAttributes.setAttribute(0, amount);
+	}
+	
+	public Transfer() {
+		
 	}
 	
 	public void signSender() {
@@ -172,15 +180,30 @@ public class Transfer extends RecordBase  {
 		return tf;
 	}
 
-	@Override
-	public byte[] serializeRecord() {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
-	public void parseFrom(byte[] data) {
-		// TODO Auto-generated method stub
-		
+	public byte[] serializeRecord() {
+		BverifySerialization.Record.Builder builder = BverifySerialization.Record.newBuilder();
+		builder.setCategoricalAttributes(this.categoricalAttributes.serializeCategoricalAttributes());
+		builder.setNumericalAttributes(this.numericalAttributes.serializeNumericalAttributes());
+		builder.setDateCreated(this.dateCreated.getTime());
+		builder.setRecordType(BverifySerialization.Record.Type.TRANSFER);
+		builder.setOtherData(ByteString.copyFrom(SerializationUtils.serialize(this)));
+		return builder.build().toByteArray();
+	}
+
+
+	@Override
+	public void parseFrom(byte[] data) throws InvalidProtocolBufferException {
+		BverifySerialization.Record message = BverifySerialization.Record.parseFrom(data);
+		Transfer tf = SerializationUtils.deserialize(message.getOtherData().toByteArray());
+		this.categoricalAttributes = tf.categoricalAttributes;
+		this.dateCreated = tf.dateCreated;
+		this.sender = tf.sender;
+		this.senderSignature = tf.senderSignature;
+		this.goodType = tf.goodType;
+		this.numericalAttributes = tf.numericalAttributes;
+		this.recepient = tf.recepient;
+		this.recepientSignature = tf.recepientSignature;
 	}
 }

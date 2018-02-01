@@ -4,10 +4,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.accounts.Account;
+import org.bverify.serialization.BverifySerialization;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 public class Withdrawal extends Change {
 
@@ -17,6 +21,9 @@ public class Withdrawal extends Change {
 		super(goodType, -1*amount, amount, recepient, employee);
 	}
 	
+	public Withdrawal() {
+	}
+
 	@Override
 	public boolean isValid() {
 		// later can be made richer and possible depend on 
@@ -102,14 +109,28 @@ public class Withdrawal extends Change {
 
 	@Override
 	public byte[] serializeRecord() {
-		// TODO Auto-generated method stub
-		return null;
+		BverifySerialization.Record.Builder builder = BverifySerialization.Record.newBuilder();
+		builder.setCategoricalAttributes(this.categoricalAttributes.serializeCategoricalAttributes());
+		builder.setNumericalAttributes(this.numericalAttributes.serializeNumericalAttributes());
+		builder.setDateCreated(this.dateCreated.getTime());
+		builder.setRecordType(BverifySerialization.Record.Type.WITHDRAWAL);
+		builder.setOtherData(ByteString.copyFrom(SerializationUtils.serialize(this)));
+		return builder.build().toByteArray();
 	}
 
+
 	@Override
-	public void parseFrom(byte[] data) {
-		// TODO Auto-generated method stub
-		
+	public void parseFrom(byte[] data) throws InvalidProtocolBufferException {
+		BverifySerialization.Record message = BverifySerialization.Record.parseFrom(data);
+		Withdrawal wd = SerializationUtils.deserialize(message.getOtherData().toByteArray());
+		this.categoricalAttributes = wd.categoricalAttributes;
+		this.dateCreated = wd.dateCreated;
+		this.employee = wd.employee;
+		this.employeeSignature = wd.employeeSignature;
+		this.goodType = wd.goodType;
+		this.numericalAttributes = wd.numericalAttributes;
+		this.recepient = wd.recepient;
+		this.recepientSignature = wd.recepientSignature;
 	}
 	
 }

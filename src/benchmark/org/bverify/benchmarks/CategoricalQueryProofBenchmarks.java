@@ -9,7 +9,6 @@ import java.util.Random;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
 import org.bverify.proofs.CategoricalQueryProof;
@@ -75,7 +74,6 @@ public class CategoricalQueryProofBenchmarks {
 
 			res.add(record);
 		}
-
 		return res;
 	}
 
@@ -117,50 +115,54 @@ public class CategoricalQueryProofBenchmarks {
 	 */
 	public static BaselineStats getStats(ArrayList<Record> records, CategoricalAttributes filter) {
 		int numberOfRecordsAll = records.size();
-		int sizeOfRecordsAll = SerializationUtils.serialize(records).length;
-		ArrayList<Record> matching = new ArrayList<Record>();
+		int sizeOfRecordsAll = 0;
+		int sizeOfRecordsMatching = 0;
+		int numberOfRecordsMatching = 0;
 		for (Record r : records) {
+			int size = r.serializeRecord().length;
 			if (r.getCategoricalAttributes().hasAttributes(filter)) {
-				matching.add(r);
+				numberOfRecordsMatching = numberOfRecordsMatching + 1;
+				sizeOfRecordsMatching = sizeOfRecordsMatching + size;
 			}
+			sizeOfRecordsAll = sizeOfRecordsAll + size;
 		}
-		int numberOfRecordsMatching = matching.size();
-		int sizeOfRecordsMatching = SerializationUtils.serialize(matching).length;
 		return new BaselineStats(numberOfRecordsAll, numberOfRecordsMatching, sizeOfRecordsAll, sizeOfRecordsMatching);
 
 	}
 
-	public static void benchmarkEfficiencyOfProof(int numberOfRecords, String fileName) {
-		double[] pvals = {0.1};
+	public static void benchmarkEfficiencyOfProof(int numberOfRecords, int numberNumericalAttributes, String fileName) {
+		int numberCategoricalAttributes = 3;
+		double[] pvals = {0.1, 0.2, 0.6, 0.8};
 		int[] sortingWindows = { 0, numberOfRecords / 4 , numberOfRecords / 2, numberOfRecords };
 
-		CategoricalAttributes filter0 = new CategoricalAttributes(3);
+		CategoricalAttributes filter0 = new CategoricalAttributes(numberCategoricalAttributes);
 		filter0.setAttribute(0, false);
 		filter0.setAttribute(1, false);
 		filter0.setAttribute(2, false);
-		CategoricalAttributes filter1 = new CategoricalAttributes(3);
+		CategoricalAttributes filter1 = new CategoricalAttributes(numberCategoricalAttributes);
 		filter1.setAttribute(0, true);
 		filter1.setAttribute(1, false);
 		filter1.setAttribute(2, false);
-		CategoricalAttributes filter2 = new CategoricalAttributes(3);
+		CategoricalAttributes filter2 = new CategoricalAttributes(numberCategoricalAttributes);
 		filter2.setAttribute(0, true);
 		filter2.setAttribute(1, true);
 		filter2.setAttribute(2, false);
-		CategoricalAttributes filter3 = new CategoricalAttributes(3);
+		CategoricalAttributes filter3 = new CategoricalAttributes(numberCategoricalAttributes);
 		filter3.setAttribute(0, true);
 		filter3.setAttribute(1, true);
 		filter3.setAttribute(2, true);
-		CategoricalAttributes[] filters = { filter0, filter1, filter2, filter3 };
+		CategoricalAttributes[] filters = {filter0, filter1, filter2, filter3 };
 		try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(fileName));
 				CSVPrinter csvPrinter = new CSVPrinter(writer,
 						CSVFormat.DEFAULT.withHeader("Query", "p", "w", "NumberOfRecordsMatching", "ProofSize",
 								"SizeOfRecordsMatching", "NumberOfRecordsAll", "SizeOfRecordsAll",
-								"SizeOfProofAll"));) {
+								"SizeOfProofAll", "NumberCategoricalAttributes", "NumberNumericalAttributes"));) {
 			for (double p : pvals) {
 				for (int w : sortingWindows) {
 					for (CategoricalAttributes filter : filters) {
 						// get the list of random records
-						ArrayList<Record> records = getListOfRandomRecords(numberOfRecords, 1, 3, p);
+						ArrayList<Record> records = getListOfRandomRecords(numberOfRecords, numberNumericalAttributes
+								, numberCategoricalAttributes, p);
 						// sort it (if needed)
 						sortListOfRecords(records, w);
 						CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
@@ -173,11 +175,11 @@ public class CategoricalQueryProofBenchmarks {
 						double sizeOfProofAll = tree.serializeTree().length;
 						BaselineStats stats = getStats(records, filter);
 						CategoricalQueryProof proof = new CategoricalQueryProof(filter, tree, 1, numberOfRecords - 1);
-						System.out.println("<---p = " + p +" w = "+w+" filter = " + filter + " --->");
+						System.out.println("<---n = "+records.size()+" p = " + p +" w = "+w+" filter = " + filter + " --->");
 
 						csvPrinter.printRecord(filter.toString(), p, w, stats.numberOfRecordsMatching,
 								proof.getSizeInBytes(), stats.sizeOfRecordsMatching, stats.numberOfRecordsAll,
-								stats.sizeOfRecordsAll, sizeOfProofAll);
+								stats.sizeOfRecordsAll, sizeOfProofAll, numberCategoricalAttributes, numberNumericalAttributes);
 					}
 				}
 			}
@@ -187,7 +189,10 @@ public class CategoricalQueryProofBenchmarks {
 	}
 
 	public static void main(String[] args) {
-		benchmarkEfficiencyOfProof(100000, "./analysis/benchmarking/query_proof_size.csv");
+		
+		
+		benchmarkEfficiencyOfProof(10000, 10, "./analysis/benchmarking/query_proof_size.csv");
+		
 	}
 
 }

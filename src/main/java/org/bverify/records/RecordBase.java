@@ -13,14 +13,14 @@ public abstract class RecordBase implements Record {
 	private static final long serialVersionUID = 3L;
 
 	// should be later moved over to a categorical attribute
-	protected final String goodType; 
+	protected String goodType; 
 	
 	// basic record data
 	protected Date dateCreated;
 	
 	// attributes
-	protected final CategoricalAttributes categoricalAttributes;
-	protected final NumericalAttributes numericalAttributes;
+	protected CategoricalAttributes categoricalAttributes;
+	protected NumericalAttributes numericalAttributes;
 	
 	public RecordBase(CategoricalAttributes categoricalAttributes,
 			NumericalAttributes numericalAttributes, 
@@ -31,6 +31,9 @@ public abstract class RecordBase implements Record {
 		this.dateCreated = new Date();
 	}
 	
+	public RecordBase() {
+	}
+
 	/** These must be implemented and depend on the record type */
 
 	public abstract boolean isSigned();

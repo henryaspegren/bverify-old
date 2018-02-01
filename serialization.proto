@@ -20,11 +20,25 @@ message RecordAggregation {
 	required CategoricalAttributes categoricalAttributes = 2;
 	required bytes hash = 3;
 }
-
+	
 message Record {
 	required NumericalAttributes numericalAttributes = 1;
 	required CategoricalAttributes categoricalAttributes = 2;
 	required int64 dateCreated = 3;
-	optional bytes otherData = 4;
+	
+	// unfortuantely this 
+	// has to be hard coded in for now 
+	// since it is required to figure out 
+	// which class of record it is
+	enum Type { 
+		SIMPLE_RECORD = 0;
+		DEPOSIT = 1;
+		WITHDRAWAL = 2;
+		TRANSFER = 3;
+		OTHER = 4;
+	}
+
+	required Type recordType = 4;
+	optional bytes otherData = 5;
 }
 

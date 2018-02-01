@@ -58,6 +58,10 @@ public class SimpleRecord implements Record {
 		this.datecreated = new Date();
 	}
 	
+	// creates an empty record
+	public SimpleRecord() {
+	}
+
 	@Override
 	public CategoricalAttributes getCategoricalAttributes() {
 		return new CategoricalAttributes(this.categoricalAttributes);
@@ -122,6 +126,7 @@ public class SimpleRecord implements Record {
 		builder.setCategoricalAttributes(this.categoricalAttributes.serializeCategoricalAttributes());
 		builder.setNumericalAttributes(this.numericalAttributes.serializeNumericalAttributes());
 		builder.setDateCreated(this.datecreated.getTime());
+		builder.setRecordType(BverifySerialization.Record.Type.SIMPLE_RECORD);
 		return builder.build().toByteArray();
 	}
 

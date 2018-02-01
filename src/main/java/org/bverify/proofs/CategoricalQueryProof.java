@@ -115,7 +115,8 @@ public class CategoricalQueryProof implements Proof {
 
 	@Override
 	public int getSizeInBytes() {
-		return SerializationUtils.serialize(this).length;
+		//return SerializationUtils.serialize(this).length;
+		return this.proofTree.serializeTree().length;
 	}
 	
 
@@ -172,6 +173,10 @@ public class CategoricalQueryProof implements Proof {
 				new CryptographicRecordAggregator(), new ArrayStore<RecordAggregation, Record>());
 		this.proofTree.parseTree((byte[]) ois.readObject());
 		
+	}
+	
+	public String proofTreeToString() {
+		return this.proofTree.toString();
 	}
 	
 }

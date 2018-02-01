@@ -5,25 +5,34 @@ import os
 
 
 ##############################
-### Record Aggregation Size
+### Record Aggregation and Record Size
 #############################
-def plotRecordAggregationSize():
-	filename = os.path.join(os.path.dirname(os.getcwd()), "benchmarking/record_aggregation_size.csv")
+def plotRecordAndRecordAggregationSize():
+	filename = os.path.join(os.path.dirname(os.getcwd()), "benchmarking/record_and_record_aggregation_size.csv")
 	res = pd.read_csv(filename)
-
+	
+	# filter 
 	filtered = res[res['NumberNumerical'] == res['NumberCategorical']]
-	x = filtered['NumberNumerical']
-	y = filtered['Size']
-
+	x_record_aggregation = filtered['NumberNumerical']
+	y_record_aggregation = filtered['RecordAggregationSize']
+	x_record = filtered['NumberNumerical']
+	y_record = filtered['RecordSize']
+	
 	fig, ax = plt.subplots()
+	
 	# scales linearly so add a line of fit for comparison
-	fit = np.polyfit(x, y, deg=1)
-	ax.plot(x, fit[0] * x + fit[1], color='red')
+	fit_record_aggregation = np.polyfit(x_record_aggregation, y_record_aggregation, deg=1)
+	ax.plot(x_record_aggregation, fit_record_aggregation[0] * x_record_aggregation + fit_record_aggregation[1], color='red', label='_nolegend_')
+	
+	fit_record = np.polyfit(x_record, y_record, deg=1)
+	ax.plot(x_record, fit_record[0] * x_record + fit_record[1], color='blue', label='_nolegend_')	
 
-	ax.scatter(x, y, color='blue')
-	ax.set_title('Record Aggregation Size')
+	ax.scatter(x_record_aggregation, y_record_aggregation, color='red', label='Record Aggregation')
+	ax.scatter(x_record, y_record, color='blue', label='Record')
+	ax.set_title('Size')
 	ax.set_xlabel('Number of Attributes In Record')
 	ax.set_ylabel('Size of Record Aggregation (in bytes)')	
+	plt.legend(loc='upper left')
 	plt.show()
 
 
@@ -45,20 +54,19 @@ def plotHistoryTreeSize():
 	x2pruned = pruned_res[pruned_res['NumberAttributes'] == 2]['NumberRecords']
 	y2pruned = pruned_res[pruned_res['NumberAttributes'] == 2]['Size']
 	
-	
+			
 	x128 = res[res['NumberAttributes'] == 128]['NumberRecords']
 	y128 = res[res['NumberAttributes'] == 128]['Size']
 	
 	x128pruned = pruned_res[pruned_res['NumberAttributes'] == 128]['NumberRecords']
 	y128pruned = pruned_res[pruned_res['NumberAttributes'] == 128]['Size']
+		
+	x16 = res[res['NumberAttributes'] == 16]['NumberRecords']
+	y16 = res[res['NumberAttributes'] == 16]['Size']
 	
-	
-	x512 = res[res['NumberAttributes'] == 512]['NumberRecords']
-	y512 = res[res['NumberAttributes'] == 512]['Size']
-	
-	x512pruned = pruned_res[pruned_res['NumberAttributes'] == 512]['NumberRecords']
-	y512pruned = pruned_res[pruned_res['NumberAttributes'] == 512]['Size']
-	
+	x16pruned = pruned_res[pruned_res['NumberAttributes'] == 16]['NumberRecords']
+	y16pruned = pruned_res[pruned_res['NumberAttributes'] == 16]['Size']
+		
 	fig, ax = plt.subplots()
 	
 	
@@ -68,8 +76,7 @@ def plotHistoryTreeSize():
 	ax.plot(np.log(x2), np.log(fit2[0] *x2 + fit2[1]), color='red', label='_nolegend_', linestyle='--')
 	fit2pruned = np.polyfit(np.log(x2pruned), y2pruned, deg=1)
 	ax.plot(np.log(x2pruned), np.log(fit2pruned[0] * np.log(x2pruned) + fit2pruned[1]), label='_nolegend_', color='red')
-	
-	
+
 	
 	ax.scatter(np.log(x128), np.log(y128), color='blue', marker='o', label='128 Attributes, Full Tree')
 	ax.scatter(np.log(x128pruned), np.log(y128pruned), color='blue', marker='^', label='128 Attributes, Merkle Path')
@@ -79,14 +86,15 @@ def plotHistoryTreeSize():
 	ax.plot(np.log(x128pruned), np.log(fit128pruned[0] * np.log(x128pruned) + fit128pruned[1]), color='blue', label='_nolegend_')
 	
 	
-	ax.scatter(np.log(x512), np.log(y512), color='green', marker='o', label='512 Attributes, Full Tree')
-	ax.scatter(np.log(x512pruned), np.log(y512pruned), color='green', marker='^', label='512 Attributes, Merkle Path')
-	fit512 = np.polyfit(x512, y512, deg = 1)
-	ax.plot(np.log(x512), np.log(fit512[0]*x512 + fit512[1]), color="green", linestyle='--', label='_nolegend_')	
-	fit512pruned = np.polyfit(np.log(x512pruned), y512pruned, deg=1)
-	ax.plot(np.log(x512pruned), np.log(fit512pruned[0] * np.log(x512pruned) + fit512pruned[1]), color='green', label='_nolegend_')
+	ax.scatter(np.log(x16), np.log(y16), color='green', marker='o', label='16 Attributes, Full Tree')
+	ax.scatter(np.log(x16pruned), np.log(y16pruned), color='green', marker='^', label='16 Attributes, Merkle Path')
+	fit16= np.polyfit(x16, y16, deg = 1)
+	ax.plot(np.log(x16), np.log(fit16[0]*x16 + fit16[1]), color="green", linestyle='--', label='_nolegend_')	
+	fit16pruned = np.polyfit(np.log(x16pruned), y16pruned, deg=1)
+	ax.plot(np.log(x16pruned), np.log(fit16pruned[0] * np.log(x16pruned) + fit16pruned[1]), color='green', label='_nolegend_')
 	
-		
+	plt.xlim(xmin=0)
+	plt.ylim(ymin=0)
 	ax.set_title("History Tree Size")
 	ax.set_xlabel("Log of Number of Records")
 	ax.set_ylabel("Log of Size (in bytes)")
@@ -103,9 +111,7 @@ def plotHistoryTreeSize():
 def plotCategoricalQueryProofSize():
 	filename = os.path.join(os.path.dirname(os.getcwd()), "benchmarking/query_proof_size.csv")
 	res = pd.read_csv(filename)
-	
-	print(res)
-	
+		
 	fig, ax = plt.subplots()
 	
 	colors = ['red', 'purple', 'green', 'yellow', 'orange']
@@ -118,10 +124,14 @@ def plotCategoricalQueryProofSize():
 		ax.scatter(filtered['NumberOfRecordsMatching'], filtered['ProofSize'], color=color, marker='^', label=str(w/max(ws) * 100)+ '% sorted')
 	
 	ax.scatter(filtered['NumberOfRecordsMatching'], filtered['SizeOfRecordsMatching'], color='blue', marker='o', label = "Size Of Matching Records")	
-	ax.axhline(y=res['SizeOfRecordsAll'][0],c="black",linewidth=0.5, linestyle='--', label = "Size of All Records")
-	ax.axhline(y=res['SizeOfProofAll'][0],c="black",linewidth=0.5, label = "Size of Tree Serialization With All Records")
+	ax.axhline(y=max(res['SizeOfRecordsAll']),c="black",linewidth=0.5, linestyle='--', label = "Size of All Records Raw Serialization")
+	ax.axhline(y=max(res['SizeOfProofAll']),c="black",linewidth=0.5, label = "Size of Tree Serialization With All Records")
 	
-	ax.set_title("Cateogrical Query Proof Size Benchmark")
+	number_of_numerical_attributes = res['NumberNumericalAttributes'][0]
+	number_of_categorical_attributes = res['NumberCategoricalAttributes'][0]
+	plt.title("Cateogrical Query Proof Size Benchmark")
+	plt.suptitle("Number of Numerical Attributes: "+str(number_of_numerical_attributes)+
+				"| Number of Categorical Attributes: "+str(number_of_categorical_attributes))
 	ax.set_xlabel("Number Of Records Matching Query")
 	ax.set_ylabel("Size of Proof (bytes)")
 	
@@ -129,6 +139,11 @@ def plotCategoricalQueryProofSize():
 	plt.show()
 
 
-plotCategoricalQueryProofSize()
+""""
+Uncomment to run
+"""
+#plotRecordAndRecordAggregationSize()
+plotHistoryTreeSize()
+#plotCategoricalQueryProofSize()
 
 

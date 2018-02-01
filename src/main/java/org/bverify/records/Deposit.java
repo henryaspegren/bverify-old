@@ -4,10 +4,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.accounts.Account;
+import org.bverify.serialization.BverifySerialization;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
+import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 
 public class Deposit extends Change {
 	
@@ -18,6 +22,11 @@ public class Deposit extends Change {
 	}
 	
 	
+	public Deposit() {
+		super();
+	}
+
+
 	@Override
 	public boolean isValid() {
 		// later can be made richer and possible depend on 
@@ -104,15 +113,28 @@ public class Deposit extends Change {
 
 	@Override
 	public byte[] serializeRecord() {
-		// TODO Auto-generated method stub
-		return null;
+		BverifySerialization.Record.Builder builder = BverifySerialization.Record.newBuilder();
+		builder.setCategoricalAttributes(this.categoricalAttributes.serializeCategoricalAttributes());
+		builder.setNumericalAttributes(this.numericalAttributes.serializeNumericalAttributes());
+		builder.setDateCreated(this.dateCreated.getTime());
+		builder.setRecordType(BverifySerialization.Record.Type.DEPOSIT);
+		builder.setOtherData(ByteString.copyFrom(SerializationUtils.serialize(this)));
+		return builder.build().toByteArray();
 	}
 
 
 	@Override
-	public void parseFrom(byte[] data) {
-		// TODO Auto-generated method stub
-		
+	public void parseFrom(byte[] data) throws InvalidProtocolBufferException {
+		BverifySerialization.Record message = BverifySerialization.Record.parseFrom(data);
+		Deposit dep = SerializationUtils.deserialize(message.getOtherData().toByteArray());
+		this.categoricalAttributes = dep.categoricalAttributes;
+		this.dateCreated = dep.dateCreated;
+		this.employee = dep.employee;
+		this.employeeSignature = dep.employeeSignature;
+		this.goodType = dep.goodType;
+		this.numericalAttributes = dep.numericalAttributes;
+		this.recepient = dep.recepient;
+		this.recepientSignature = dep.recepientSignature;
 	}
 
 }

@@ -5,11 +5,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
 import org.bverify.records.Record;
@@ -53,34 +53,33 @@ public class HistoryTreeBenchmarks {
 		
 	}
 	
-	public static void simpleRecordSizes(int max, String fileName) {
-        try(
-                BufferedWriter writer = Files.newBufferedWriter(Paths.get(fileName));
-                CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-                        .withHeader("NumberNumerical", "NumberCategorical", "Size"))
-		;) 
-        {
-        	
-            for(int numNum = 1; numNum <= max; numNum = numNum*2) {
-	    		for(int numCat = 1; numCat <= max; numCat = numCat*2) {
-	    			SimpleRecord sr = new SimpleRecord(numNum, numCat);
-	    			int size = SerializationUtils.serialize(sr).length;
-	    			System.out.println("[Simple Record] Numerical: "+numNum+" Categorical: "+numCat+
-	    					"\t\t| Size : "+size);
-	    			csvPrinter.printRecord(numNum, numCat, size);
-	    		}
-            }		
-            csvPrinter.flush();            
-        } catch (IOException e) {
-			e.printStackTrace();
+	public static List<Record> makeListOfRecords(int numberOfRecords, int numberOfCategoricalAttributes,
+			int numberOfNumericalAttributes){
+		List<Record> res = new ArrayList<Record>();
+		for(int i = 0; i < numberOfRecords; i++) {
+			// creates a random record 
+			Record record = new SimpleRecord(numberOfNumericalAttributes, numberOfCategoricalAttributes);
+			res.add(record);
 		}
+		return res;
 	}
 	
-	public static void recordAggregationSizes(int max, String fileName) {
+	public static int getSizeOfRecords(int numberOfRecords, int numberOfCategoricalAttributes,
+			int numberOfNumericalAttributes){
+		int size = 0;
+		for(int i = 0; i < numberOfRecords; i++) {
+			// creates a random record 
+			Record record = new SimpleRecord(numberOfNumericalAttributes, numberOfCategoricalAttributes);
+			size = size + record.serializeRecord().length;
+		}
+		return size;
+	}	
+	
+	public static void recordandRecordAggregationSizes(int max, String fileName) {
         try(
                 BufferedWriter writer = Files.newBufferedWriter(Paths.get(fileName));
                 CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-                        .withHeader("NumberNumerical", "NumberCategorical", "Size"))
+                        .withHeader("NumberNumerical", "NumberCategorical", "RecordSize", "RecordAggregationSize"))
 		;) 
         {
     		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
@@ -88,10 +87,11 @@ public class HistoryTreeBenchmarks {
 	    		for(int numCat = 1; numCat <= max; numCat = numCat*2) {
 	    			SimpleRecord sr = new SimpleRecord(numNum, numCat);
 	    			RecordAggregation agg = aggregator.aggVal(sr);
-	    			int size = SerializationUtils.serialize(agg).length;
-	    			System.out.println("[Record Aggregation] Numerical: "+numNum+" Categorical: "+numCat+
-	    					"\t\t| Size : "+size);
-	    			csvPrinter.printRecord(numNum, numCat, size);
+	    			int recordAggregationSize = agg.serializatRecordAggregation().length;
+	    			int recordSize = sr.serializeRecord().length;
+	    			System.out.println("Numerical: "+numNum+" Categorical: "+numCat+
+	    					"\t\t| RecordSize: "+recordSize + " RecordAggregationSize: "+recordAggregationSize);
+	    			csvPrinter.printRecord(numNum, numCat, recordSize, recordAggregationSize);
 	    		}
             }		
             csvPrinter.flush();            
@@ -113,6 +113,27 @@ public class HistoryTreeBenchmarks {
 							numAtts, numAtts);
 	    			int size = res.serializeTree().length;
 	    			System.out.println("[History Tree] Records: "+numRecords+" Attributes: "+numAtts+
+	    					"\t\t| Size : "+size);
+	    			csvPrinter.printRecord(numRecords, numAtts, size);
+	    		}
+            }		
+            csvPrinter.flush();            
+        } catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void rawRecordsSizes(int maxRecords, int maxAttributes, String fileName) {
+        try(
+                BufferedWriter writer = Files.newBufferedWriter(Paths.get(fileName));
+                CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
+                        .withHeader("NumberRecords", "NumberAttributes", "Size"))
+		;) 
+        {
+            for(int numRecords = 1; numRecords <= maxRecords; numRecords = numRecords*2) {
+	    		for(int numAtts = 1; numAtts <= maxAttributes; numAtts = numAtts*2) {
+					int size = getSizeOfRecords(numRecords, numAtts, numAtts);
+	    			System.out.println("[Raw Records] Records: "+numRecords+" Attributes: "+numAtts+
 	    					"\t\t| Size : "+size);
 	    			csvPrinter.printRecord(numRecords, numAtts, size);
 	    		}
@@ -157,43 +178,10 @@ public class HistoryTreeBenchmarks {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		//simpleRecordSizes(10000, "./analysis/benchmarking/simple_record_size.csv");
-		//recordAggregationSizes(10000, "./analysis/benchmarking/record_aggregation_size.csv");
-		//fullHistoryTreeSizes(40000, 1000, "./analysis/benchmarking/full_history_tree_size.csv");
-		//prunedHistoryTree(40000, 1000, "./analysis/benchmarking/pruned_history_tree_size.csv");
-		
-		
-		SimpleRecord sr = new SimpleRecord(1, 1);
-		int srlength = sr.serializeRecord().length;
-		System.out.println(sr);
-		System.out.println("SIMPLE RECORD - "+srlength);
-				
-		CryptographicRecordAggregator cagg = new CryptographicRecordAggregator();
-		RecordAggregation recordAgg = cagg.aggVal(sr);
-		System.out.println("AGG(SIMPLE RECORD) - "+recordAgg.serializatRecordAggregation().length);
-		
-		CryptographicRecordAggregator aggregator = new CryptographicRecordAggregator();
-		ArrayStore<RecordAggregation, Record> store = new ArrayStore<RecordAggregation,Record>();    
-		HistoryTree<RecordAggregation, Record> histtree = new HistoryTree<RecordAggregation, Record>(aggregator, store);		
-		ArrayList<Record> listOfRecords = new ArrayList<Record>();
-		int totalRecordSerialization = 0;
-		for(int i = 0; i < 100000; i++) {
-			SimpleRecord newsr = new SimpleRecord(1, 1);
-			totalRecordSerialization = totalRecordSerialization+  newsr.serializeRecord().length;
-			histtree.append(newsr);
-			listOfRecords.add(newsr);
-		}
-		System.out.println("TOTAL RECORDS: "+totalRecordSerialization);
-		int length = histtree.serializeTree().length;
-		int lengthList = SerializationUtils.serialize(listOfRecords).length;
-		System.out.println("HISTORY TREE<"+histtree.version()+">: " +length + 
-				" - "+length/(double) totalRecordSerialization);
-		System.out.println("LIST<"+listOfRecords.size()+">: "+ lengthList + 
-				" - "+lengthList/(double) totalRecordSerialization);
-				
-	
-
-		
+		//recordandRecordAggregationSizes(1000, "./analysis/benchmarking/record_and_record_aggregation_size.csv");
+		//rawRecordsSizes(10000, 1000, "./analysis/benchmarking/raw_records_size.csv");
+		//fullHistoryTreeSizes(100000, 128, "./analysis/benchmarking/full_history_tree_size.csv");
+		//prunedHistoryTree(100000, 128, "./analysis/benchmarking/pruned_history_tree_size.csv");
 	}
 	
 	

@@ -128,7 +128,7 @@ public class RecordTest extends TestCase {
 	public void testSimpleRecordSerialization() {
 		try {
 			SimpleRecord sr = new SimpleRecord(13, 13);
-			SimpleRecord srFromBytes  = new SimpleRecord(100, 100);
+			SimpleRecord srFromBytes  = new SimpleRecord();
 			srFromBytes.parseFrom(sr.serializeRecord());
 			Assert.assertTrue(srFromBytes.equals(sr));
 		}catch(InvalidProtocolBufferException e ) {

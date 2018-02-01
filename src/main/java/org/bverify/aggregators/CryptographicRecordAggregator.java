@@ -1,8 +1,6 @@
 package org.bverify.aggregators;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.records.Record;
-import org.bverify.records.SimpleRecord;
 
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -60,11 +58,13 @@ public class CryptographicRecordAggregator implements AggregationInterface<Recor
 	 * TODO: Port to google protobuf
 	 */
 	public ByteString serializeVal(Record val) {
+		//System.out.println("SERIALIZING VAL :"+ val.toString());
 		byte[] byteRep = val.serializeRecord();
 		return ByteString.copyFrom(byteRep);
 	}
 
 	public ByteString serializeAgg(RecordAggregation agg) {
+		//System.out.println("SERIALIZING AGG :"+ agg.toString());
 		byte[] byteRep = agg.serializatRecordAggregation();
 		return ByteString.copyFrom(byteRep);
 	}
@@ -82,16 +82,14 @@ public class CryptographicRecordAggregator implements AggregationInterface<Recor
 	}
 
 	public Record parseVal(ByteString b) {
-		// TODO FIX THIS - Needs to be able to parse records of all types
-		// type inference needed
-		SimpleRecord sr = new SimpleRecord(1, 1);
+		Record r;
 		try {
-			sr.parseFrom(b.toByteArray());
+			r = Record.parseRecord(b.toByteArray());
 		} catch (InvalidProtocolBufferException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			throw new RuntimeException("Fatal serialization error");
 		}
-		return sr;
+		return r;
 	}
 
 	public AggregationInterface<RecordAggregation, Record> clone() {
