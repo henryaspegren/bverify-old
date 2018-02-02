@@ -15,18 +15,26 @@ import org.slf4j.LoggerFactory;
 
 import edu.rice.historytree.ProofError;
 
-public class BVerifyClient {
+/**
+ * For now this class consists of various 
+ * functions that the client will want to perform 
+ * that will need to be split off into RPC/RMI calls.
+ * Currently these have only been implemented locally
+ * @author henryaspegren
+ *
+ */
+public class BVerifyClientUtils {
 	
 	private CatenaClient  bitcoinTxReader; 
-	private BVerifyServer bverifyserver;
+	private BVerifyServerUtils bverifyserver;
 		
 	private ArrayList<byte[]> commitmentHashes;
 	private ArrayList<Boolean> verifiedCommitmentHashes;
 	private int currentCommitmentNumber;
 		
-	private static final Logger log = LoggerFactory.getLogger(BVerifyClient.class);
+	private static final Logger log = LoggerFactory.getLogger(BVerifyClientUtils.class);
 	
-	public BVerifyClient(CatenaClient client, BVerifyServer bverifyserver) {
+	public BVerifyClientUtils(CatenaClient client, BVerifyServerUtils bverifyserver) {
 		this.bitcoinTxReader = client;
 		this.bverifyserver = bverifyserver;
 		this.commitmentHashes = new ArrayList<byte[]>();

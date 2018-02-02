@@ -27,7 +27,7 @@ import edu.rice.historytree.storage.ArrayStore;
  * @author henryaspegren
  *
  */
-public class HistoryTreeBenchmarks {
+public class HistoryTreeSizeBenchmarks {
 	
 	/**
 	 * Creates a history tree with the specified number 

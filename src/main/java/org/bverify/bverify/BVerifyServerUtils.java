@@ -10,8 +10,10 @@ import org.bitcoinj.core.Transaction;
 import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
 import org.bverify.proofs.AggregationProof;
+import org.bverify.proofs.CategoricalQueryProof;
 import org.bverify.proofs.ConsistencyProof;
 import org.bverify.proofs.RecordProof;
+import org.bverify.records.CategoricalAttributes;
 import org.bverify.records.Record;
 import org.catena.server.CatenaServer;
 import org.slf4j.Logger;
@@ -23,6 +25,9 @@ import edu.rice.historytree.ProofError;
 import edu.rice.historytree.storage.ArrayStore;
 
 /**
+ * Implementations of the server state as well
+ * as various methods. These will eventually need to  
+ * be written out as RPC/RMI calls.
  * 
  * Records are indexed [0, ... , totalRecords - 1] 
  * Commitments are indexed [0, ..., totalCommitments - 1]
@@ -31,7 +36,7 @@ import edu.rice.historytree.storage.ArrayStore;
  * @author henryaspegren
  *
  */
-public class BVerifyServer {
+public class BVerifyServerUtils {
 
 	private transient CatenaServer bitcoinTxPublisher;
 	private CryptographicRecordAggregator aggregator;
@@ -43,6 +48,7 @@ public class BVerifyServer {
 	 * and uncommitted -- stored by Bverify
 	 */
 	private int totalRecords;
+	
 	/**
 	 * Committed records are records for which a commitment transaction
 	 * has been issued on the Blockchain
@@ -56,7 +62,7 @@ public class BVerifyServer {
 	private HashMap<ByteBuffer, Integer> commitmentHashToCommitmentNumber;
 	private HashMap<Integer, Integer> commitmentNumberToVersionNumber;
 	
-    private static final Logger log = LoggerFactory.getLogger(BVerifyServer.class);
+    private static final Logger log = LoggerFactory.getLogger(BVerifyServerUtils.class);
 	
 	/**
 	 * Commit a set of records to the Blockchain by
@@ -66,8 +72,7 @@ public class BVerifyServer {
 	 */
 	private static final int COMMIT_INTERVAL = 3;
 	
-	
-	public BVerifyServer(CatenaServer srvr) {
+	public BVerifyServerUtils(CatenaServer srvr) {
         this.aggregator = new CryptographicRecordAggregator();
 		this.store = new ArrayStore<RecordAggregation,Record>();    
 		this.histtree = new HistoryTree<RecordAggregation, Record>(aggregator, store);
@@ -80,7 +85,6 @@ public class BVerifyServer {
 		this.commitmentNumberToVersionNumber = new HashMap<Integer, Integer>();
 	}
 	
-	
 	public void addRecord(Record r) throws InsufficientMoneyException {
 		// TODO: should use multi-reader, single writer lock
 		// 		this can allow lots of parallelization for generating proofs!!!
@@ -89,13 +93,13 @@ public class BVerifyServer {
 			this.totalRecords++;
 			int outstanding_records = totalRecords - totalCommittedRecords;
 			
-			assert outstanding_records <= BVerifyServer.COMMIT_INTERVAL;
+			assert outstanding_records <= BVerifyServerUtils.COMMIT_INTERVAL;
 					
-			if(outstanding_records == BVerifyServer.COMMIT_INTERVAL) {
+			if(outstanding_records == BVerifyServerUtils.COMMIT_INTERVAL) {
 				RecordAggregation currentAgg = this.histtree.agg();
 				byte[] hashAgg = currentAgg.getHash();
 				Transaction tx = this.bitcoinTxPublisher.appendStatement(hashAgg);
-				BVerifyServer.log.info("Committing BVerify log with {} records to blockchain in txn {}",
+				BVerifyServerUtils.log.info("Committing BVerify log with {} records to blockchain in txn {}",
 						this.totalRecords, tx.getHashAsString());
 				int currentVersion = this.histtree.version();
 				this.totalCommitments++;
@@ -109,17 +113,6 @@ public class BVerifyServer {
 		}
 	}
 	
-	public byte[] getCommitment(int commitmentNumber) {
-		int version = this.commitmentNumberToRecordNumber(commitmentNumber);
-		RecordAggregation agg = this.histtree.aggV(version);
-		return agg.getHash();
-	}
-	
-	public byte[] getCurrentCommitment() {
-		int currentCommitmentNumber = this.getTotalNumberOfCommitments()-1;
-		return this.getCommitment(currentCommitmentNumber);
-	}
-
 	public ConsistencyProof constructConsistencyProof(int startingCommitNumber, int endingCommitNumber) 
 			throws ProofError{
 		List<Integer> cmtRecordNumbers = new ArrayList<>();
@@ -132,7 +125,7 @@ public class BVerifyServer {
 	}
 	
 	public RecordProof constructRecordProof(int recordNumber) throws ProofError {
-		int currentCommitmentNumber = this.totalCommitments-1;
+		int currentCommitmentNumber = this.getCurrentCommitmentNumber();
 		if(this.totalCommittedRecords <= recordNumber) {
 			throw new ProofError(String.format("Record #{} has not been commited yet. So far only commited up to "
 					+ "Record #{}", 
@@ -161,6 +154,24 @@ public class BVerifyServer {
 		
 	}
 	
+	/**
+	 * Query records using the filter and 
+	 * construct a proof that the response is correct.
+	 * @param filter - Categorical Attribute filter - find records that have 
+	 * at least these attributes.
+	 * @return
+	 * @throws ProofError
+	 */
+	public CategoricalQueryProof queryRecordsByFilter(CategoricalAttributes filter) throws ProofError
+	{
+		CategoricalQueryProof proof;
+		synchronized(this) {
+			proof =  new CategoricalQueryProof(filter, this.histtree, this.getCurrentCommitmentNumber(),
+					this.commitmentNumberToRecordNumber(this.getCurrentCommitmentNumber()));
+		}
+		return proof;
+	}
+	
 	public int commitmentHashToVersion(byte[] commitHash) {
 		return this.commitmentHashToVersion.get(ByteBuffer.wrap(commitHash));
 	}
@@ -173,12 +184,27 @@ public class BVerifyServer {
 		return this.totalCommitments;
 	}
 	
+	public int getCurrentCommitmentNumber() {
+		return this.totalCommitments - 1;
+	}
+	
 	public int getTotalNumberOfRecords() {
 		return this.totalRecords;
 	}
 	
 	public int getTotalNumberOfCommittedRecords() {
 		return this.totalCommittedRecords;
+	}
+	
+	public byte[] getCommitment(int commitmentNumber) {
+		int version = this.commitmentNumberToRecordNumber(commitmentNumber);
+		RecordAggregation agg = this.histtree.aggV(version);
+		return agg.getHash();
+	}
+	
+	public byte[] getCurrentCommitment() {
+		int currentCommitmentNumber = this.getCurrentCommitmentNumber();
+		return this.getCommitment(currentCommitmentNumber);
 	}
 	
 	public void printTree() {

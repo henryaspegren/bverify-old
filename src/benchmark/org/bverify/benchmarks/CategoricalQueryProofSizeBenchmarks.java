@@ -30,7 +30,7 @@ import edu.rice.historytree.storage.ArrayStore;
  * @author henryaspegren
  *
  */
-public class CategoricalQueryProofBenchmarks {
+public class CategoricalQueryProofSizeBenchmarks {
 
 	/** Use the same seed value so we get consistent benchmarking results */
 	public static int SEED_VAL = 91764;

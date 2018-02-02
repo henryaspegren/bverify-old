@@ -6,7 +6,6 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.bouncycastle.util.Arrays;
 import org.bverify.aggregators.CryptographicRecordAggregator;
 import org.bverify.aggregators.RecordAggregation;
@@ -30,6 +29,9 @@ public class CategoricalQueryProof implements Proof {
 	private static final long serialVersionUID = 1L;
 	private HistoryTree<RecordAggregation, Record> proofTree;
 	private CategoricalAttributes filter;
+	
+	// this list of matching records does not actually 
+	// need to be sent to the client!
 	private List<Integer> matchingRecordNumbers;
 
 	private int commitmentNumber;
@@ -115,7 +117,6 @@ public class CategoricalQueryProof implements Proof {
 
 	@Override
 	public int getSizeInBytes() {
-		//return SerializationUtils.serialize(this).length;
 		return this.proofTree.serializeTree().length;
 	}
 	

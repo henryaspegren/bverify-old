@@ -19,10 +19,10 @@ public class BVerifyClientTest extends BVerifyClientServerTest {
 	@Test
 	public void testRecordAggregationProofFailureCommitDoesntMatch() {
 		try {
-			BVerifyServer bverifyserver = new BVerifyServer(this.catenaServer);
+			BVerifyServerUtils bverifyserver = new BVerifyServerUtils(this.catenaServer);
 	        Semaphore semAppended = new Semaphore(0);
 	        this.createSemaphoredCatenaClient(this.txid, semAppended, null);
-			BVerifyClient bverifyclient = new BVerifyClient(this.catenaClient, bverifyserver);
+			BVerifyClientUtils bverifyclient = new BVerifyClientUtils(this.catenaClient, bverifyserver);
 			
 			bverifyserver.addRecord(deposit); 				// 0 
 		    bverifyserver.addRecord(deposit);				// 1 
@@ -46,10 +46,10 @@ public class BVerifyClientTest extends BVerifyClientServerTest {
 	@Test 
 	public void testRecordAggregationProofSuccess() {
 		try {
-			BVerifyServer bverifyserver = new BVerifyServer(this.catenaServer);
+			BVerifyServerUtils bverifyserver = new BVerifyServerUtils(this.catenaServer);
 	        Semaphore semAppended = new Semaphore(0);
 	        this.createSemaphoredCatenaClient(this.txid, semAppended, null);
-			BVerifyClient bverifyclient = new BVerifyClient(this.catenaClient, bverifyserver);
+			BVerifyClientUtils bverifyclient = new BVerifyClientUtils(this.catenaClient, bverifyserver);
 			
 			bverifyserver.addRecord(deposit); 				// 0 
 		    bverifyserver.addRecord(deposit);				// 1 
@@ -89,10 +89,10 @@ public class BVerifyClientTest extends BVerifyClientServerTest {
 	@Test
 	public void testRecordProofSuccess() {
 		try {
-			BVerifyServer bverifyserver = new BVerifyServer(this.catenaServer);
+			BVerifyServerUtils bverifyserver = new BVerifyServerUtils(this.catenaServer);
 	        Semaphore semAppended = new Semaphore(0);
 	        this.createSemaphoredCatenaClient(this.txid, semAppended, null);
-			BVerifyClient bverifyclient = new BVerifyClient(this.catenaClient, bverifyserver);
+			BVerifyClientUtils bverifyclient = new BVerifyClientUtils(this.catenaClient, bverifyserver);
 			// add three records to get a commitment 
 			bverifyserver.addRecord(deposit);		// 0 
 			bverifyserver.addRecord(withdrawal);	// 1
@@ -114,10 +114,10 @@ public class BVerifyClientTest extends BVerifyClientServerTest {
 	@Test
 	public void testDetectTamperedRecordProof() {
 		try {
-			BVerifyServer bverifyserver = new BVerifyServer(this.catenaServer);
+			BVerifyServerUtils bverifyserver = new BVerifyServerUtils(this.catenaServer);
 	        Semaphore semAppended = new Semaphore(0);
 	        this.createSemaphoredCatenaClient(this.txid, semAppended, null);
-			BVerifyClient bverifyclient = new BVerifyClient(this.catenaClient, bverifyserver);
+			BVerifyClientUtils bverifyclient = new BVerifyClientUtils(this.catenaClient, bverifyserver);
 			bverifyserver.addRecord(deposit);		// 0 
 			bverifyserver.addRecord(withdrawal);	// 1
 			bverifyserver.addRecord(transfer);		// 2
@@ -145,10 +145,10 @@ public class BVerifyClientTest extends BVerifyClientServerTest {
 	@Test
 	public void testConsistencyProofSuccess(){
 		try {
-			BVerifyServer bverifyserver = new BVerifyServer(this.catenaServer);
+			BVerifyServerUtils bverifyserver = new BVerifyServerUtils(this.catenaServer);
 	        Semaphore semAppended = new Semaphore(0);
 	        this.createSemaphoredCatenaClient(this.txid, semAppended, null);
-			BVerifyClient bverifyclient = new BVerifyClient(this.catenaClient, bverifyserver);
+			BVerifyClientUtils bverifyclient = new BVerifyClientUtils(this.catenaClient, bverifyserver);
 			// add three records to get a commitment 
 			bverifyserver.addRecord(deposit);
 			bverifyserver.addRecord(deposit);
@@ -190,10 +190,10 @@ public class BVerifyClientTest extends BVerifyClientServerTest {
 	@Test
 	public void testDetectInconsistencyClient(){
 		try {
-			BVerifyServer bverifyserver = new BVerifyServer(this.catenaServer);
+			BVerifyServerUtils bverifyserver = new BVerifyServerUtils(this.catenaServer);
 	        Semaphore semAppended = new Semaphore(0);
 	        this.createSemaphoredCatenaClient(this.txid, semAppended, null);
-			BVerifyClient bverifyclient = new BVerifyClient(this.catenaClient, bverifyserver);
+			BVerifyClientUtils bverifyclient = new BVerifyClientUtils(this.catenaClient, bverifyserver);
 			// add three records to get a commitment 
 			bverifyserver.addRecord(deposit);		// 1
 			bverifyserver.addRecord(deposit);		// 2

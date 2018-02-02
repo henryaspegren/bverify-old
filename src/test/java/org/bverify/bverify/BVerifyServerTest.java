@@ -22,7 +22,7 @@ public class BVerifyServerTest extends BVerifyClientServerTest {
 	@Test
 	public void testRecordAggregationProof() {
 		try {
-			BVerifyServer bverifyserver = new BVerifyServer(catenaServer);
+			BVerifyServerUtils bverifyserver = new BVerifyServerUtils(catenaServer);
 		    bverifyserver.addRecord(deposit); 				// 0 \	
 		    bverifyserver.addRecord(deposit);				// 1 /\
 		    bverifyserver.addRecord(transfer);				// 2 \ \	 
@@ -75,7 +75,7 @@ public class BVerifyServerTest extends BVerifyClientServerTest {
 	@Test
 	public void testServerRecordProof() {
 		try {
-			BVerifyServer bverifyserver = new BVerifyServer(catenaServer);
+			BVerifyServerUtils bverifyserver = new BVerifyServerUtils(catenaServer);
 		    bverifyserver.addRecord(deposit); 				// 0
 		    bverifyserver.addRecord(deposit);				// 1
 		    bverifyserver.addRecord(transfer);				// 2
@@ -109,9 +109,9 @@ public class BVerifyServerTest extends BVerifyClientServerTest {
 	@Test
 	public void testServerCommitments(){
 		try {
-			BVerifyServer bverifyserver;
+			BVerifyServerUtils bverifyserver;
 			
-		    bverifyserver = new BVerifyServer(catenaServer);
+		    bverifyserver = new BVerifyServerUtils(catenaServer);
 		    bverifyserver.addRecord(deposit); 				// 0 
 		    bverifyserver.addRecord(deposit);				// 1
 		    bverifyserver.addRecord(transfer);				// 2
