@@ -4,6 +4,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.bitcoinj.core.InsufficientMoneyException;
 import org.bitcoinj.core.Transaction;
@@ -80,6 +82,12 @@ public class BVerifyServerUtils {
 	private static final int DEFAULT_COMMIT_INTERVAL = 3;
 	private final int commitInterval;
 	
+	/**
+	 * We can also support parallelization by using a 
+	 * Read|Write lock. This allows proofs to be generated 
+	 * concurrently.
+	 */
+	private final ReadWriteLock readWriteLock;
 	
 	public BVerifyServerUtils(CatenaServer srvr, boolean commitToBitcoin, int commitInterval) {
         this.aggregator = new CryptographicRecordAggregator();
@@ -94,6 +102,7 @@ public class BVerifyServerUtils {
 		this.commitmentNumberToVersionNumber = new HashMap<Integer, Integer>();
 		this.commitToBitcoin = commitToBitcoin;
 		this.commitInterval = commitInterval;
+		this.readWriteLock = new ReentrantReadWriteLock();
 	}
 	
 	
@@ -102,47 +111,49 @@ public class BVerifyServerUtils {
 	}
 	
 	public void addRecord(Record r) throws InsufficientMoneyException {
-		// TODO: should use multi-reader, single writer lock
-		// 		this can allow lots of parallelization for generating proofs!!!
-		synchronized(this) {
-			this.histtree.append(r);
-			this.totalRecords++;
-			int outstanding_records = totalRecords - totalCommittedRecords;
-			
-			assert outstanding_records <= this.commitInterval;
-					
-			if(outstanding_records == this.commitInterval) {
-				RecordAggregation currentAgg = this.histtree.agg();
-				byte[] hashAgg = currentAgg.getHash();
-				if(commitToBitcoin) {
-					Transaction tx = this.bitcoinTxPublisher.appendStatement(hashAgg);
-					BVerifyServerUtils.log.info("Committing BVerify log with {} records to blockchain in txn {}",
-							this.totalRecords, tx.getHashAsString());
-				}
-				int currentVersion = this.histtree.version();
-				this.totalCommitments++;
-				// commitments are zero indexed
-				int currentCommitmentNumber =  this.getTotalNumberOfCommitments()-1;
-				this.commitmentHashToVersion.put(ByteBuffer.wrap(hashAgg), currentVersion);
-				this.commitmentHashToCommitmentNumber.put(ByteBuffer.wrap(hashAgg), currentCommitmentNumber);
-				this.commitmentNumberToVersionNumber.put(currentCommitmentNumber, currentVersion);
-				this.totalCommittedRecords = this.totalRecords;
-			}		
+		// write lock needed!
+		this.readWriteLock.writeLock().lock();
+		this.histtree.append(r);
+		this.totalRecords++;
+		int outstanding_records = totalRecords - totalCommittedRecords;
+		
+		assert outstanding_records <= this.commitInterval;
+				
+		if(outstanding_records == this.commitInterval) {
+			RecordAggregation currentAgg = this.histtree.agg();
+			byte[] hashAgg = currentAgg.getHash();
+			if(commitToBitcoin) {
+				Transaction tx = this.bitcoinTxPublisher.appendStatement(hashAgg);
+				BVerifyServerUtils.log.info("Committing BVerify log with {} records to blockchain in txn {}",
+						this.totalRecords, tx.getHashAsString());
+			}
+			int currentVersion = this.histtree.version();
+			this.totalCommitments++;
+			// commitments are zero indexed
+			int currentCommitmentNumber =  this.getTotalNumberOfCommitments()-1;
+			this.commitmentHashToVersion.put(ByteBuffer.wrap(hashAgg), currentVersion);
+			this.commitmentHashToCommitmentNumber.put(ByteBuffer.wrap(hashAgg), currentCommitmentNumber);
+			this.commitmentNumberToVersionNumber.put(currentCommitmentNumber, currentVersion);
+			this.totalCommittedRecords = this.totalRecords;
 		}
+		this.readWriteLock.writeLock().unlock();
 	}
 	
 	public ConsistencyProof constructConsistencyProof(int startingCommitNumber, int endingCommitNumber) 
 			throws ProofError{
+		this.readWriteLock.readLock().lock();
 		List<Integer> cmtRecordNumbers = new ArrayList<>();
 		for(int cmtNumber = startingCommitNumber; cmtNumber <= endingCommitNumber; cmtNumber++) {
 			int cmtRecordNumber = this.commitmentNumberToRecordNumber(cmtNumber);
 			cmtRecordNumbers.add(cmtRecordNumber);
 		}
 		ConsistencyProof proof = new ConsistencyProof(startingCommitNumber, cmtRecordNumbers, this.histtree);
+		this.readWriteLock.readLock().unlock();
 		return proof;
 	}
 	
 	public RecordProof constructRecordProof(int recordNumber, int commitmentNumber) throws ProofError {
+		this.readWriteLock.readLock().lock();
 		if(this.totalCommittedRecords <= recordNumber) {
 			throw new ProofError(String.format("Record #{} has not been commited yet. So far only commited up to "
 					+ "Record #{}", 
@@ -150,6 +161,7 @@ public class BVerifyServerUtils {
 		}
 		int commitmentRecordNumber = this.commitmentNumberToRecordNumber(commitmentNumber);
 		RecordProof proof = new RecordProof(recordNumber, commitmentNumber, commitmentRecordNumber, this.histtree);
+		this.readWriteLock.readLock().unlock();
 		return proof;
 	}
 	
@@ -162,11 +174,13 @@ public class BVerifyServerUtils {
 	 * hash can be recalculated and verified 
 	 */
 	public AggregationProof constructAggregationProof(int commitNumber) {
+		this.readWriteLock.readLock().lock();
 		int versionNumber = this.commitmentNumberToRecordNumber(commitNumber);
 		AggWithChildren<RecordAggregation> aggPlusChildren = this.histtree.aggVWithChildren(versionNumber);
 		AggregationProof aggProof = new AggregationProof(aggPlusChildren.getMain(),
 				aggPlusChildren.getLeft().getHash(), aggPlusChildren.getRight().getHash(),
 				commitNumber);
+		this.readWriteLock.readLock().unlock();
 		return aggProof;
 		
 	}
@@ -181,11 +195,10 @@ public class BVerifyServerUtils {
 	 */
 	public CategoricalQueryProof queryRecordsByFilter(CategoricalAttributes filter) throws ProofError
 	{
-		CategoricalQueryProof proof;
-		synchronized(this) {
-			proof =  new CategoricalQueryProof(filter, this.histtree, this.getCurrentCommitmentNumber(),
+		this.readWriteLock.readLock().lock();
+		CategoricalQueryProof proof = new CategoricalQueryProof(filter, this.histtree, this.getCurrentCommitmentNumber(),
 					this.commitmentNumberToRecordNumber(this.getCurrentCommitmentNumber()));
-		}
+		this.readWriteLock.readLock().unlock();
 		return proof;
 	}
 	
@@ -240,6 +253,7 @@ public class BVerifyServerUtils {
 	 * @param newRecord - the new record to be put in its place
 	 */
 	public void changeRecord(int recordNumber, Record newRecord) {
+		this.readWriteLock.writeLock().lock();
         CryptographicRecordAggregator newAggregator = new CryptographicRecordAggregator();
 		ArrayStore<RecordAggregation, Record> newStore = new ArrayStore<RecordAggregation,Record>();    
 		HistoryTree<RecordAggregation, Record> newHisttree = new HistoryTree<RecordAggregation, Record>(newAggregator, newStore);
@@ -258,6 +272,7 @@ public class BVerifyServerUtils {
 		this.aggregator = newAggregator;
 		this.store = newStore;
 		this.histtree = newHisttree;
+		this.readWriteLock.writeLock().unlock();
 
 	}
 		
