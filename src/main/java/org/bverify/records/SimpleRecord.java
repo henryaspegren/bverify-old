@@ -1,8 +1,9 @@
 package org.bverify.records;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
 
 import org.bverify.serialization.BverifySerialization;
 
@@ -22,11 +23,11 @@ public class SimpleRecord implements Record {
 	
 	private Date datecreated;
 	
-	public static int MAX_NUM = 100;
-	public static int MIN_NUM = -100;
+	public static final int MAX_NUM = 100;
+	public static final int MIN_NUM = -100;
 	
 	// set a seed
-	public static Random prng = new Random(10401);
+	public static final Random prng = new Random(10401);
 		
 	
 	/**
@@ -42,20 +43,53 @@ public class SimpleRecord implements Record {
 		this.numericalAttributes = new NumericalAttributes(numNumericalAttributes);
 		this.categoricalAttributes = new CategoricalAttributes(numCategoricalAttributes);
 		for(int i = 0; i < numNumericalAttributes; i++) {
-			int randomInt = ThreadLocalRandom.current().nextInt(MIN_NUM, MAX_NUM + 1);
+			int randomInt = getValInRange(prng, MAX_NUM, MIN_NUM);
 			boolean randomBoolean = prng.nextBoolean();
 			this.numericalAttributes.setAttribute(i, randomInt);
 			this.categoricalAttributes.setAttribute(i, randomBoolean);
 		}
 		this.datecreated = new Date();
-		
-		
+	}
+	
+	public SimpleRecord(int numNumericalAttributes, int numCategoricalAttributes, Random prngRandomness) {
+		this.numericalAttributes = new NumericalAttributes(numNumericalAttributes);
+		this.categoricalAttributes = new CategoricalAttributes(numCategoricalAttributes);
+		for(int i = 0; i < numNumericalAttributes; i++) {
+			int randomInt = getValInRange(prngRandomness, MAX_NUM, MIN_NUM);
+			boolean randomBoolean = prngRandomness.nextBoolean();
+			this.numericalAttributes.setAttribute(i, randomInt);
+			this.categoricalAttributes.setAttribute(i, randomBoolean);
+		}
+		this.datecreated = new Date();
 	}
 	
 	public SimpleRecord(CategoricalAttributes ca, NumericalAttributes na) {
 		this.numericalAttributes = new NumericalAttributes(na);
 		this.categoricalAttributes = new CategoricalAttributes(ca);
 		this.datecreated = new Date();
+	}
+	
+	
+	/**
+	 * Produces a list of (pseudo) random records using the given seed value and params
+	 * @param seed - for the same selection of the seed, the same list of records will be produced
+	 * @param numberOfRecords
+	 * @param numNumericalAttributes
+	 * @param numCategoricalAttributes
+	 * @param date - the date these records are created
+	 * @return
+	 */
+	public static List<SimpleRecord> simpleRecordFacotry(int seed, int numberOfRecords, 
+			int numNumericalAttributes, int numCategoricalAttributes, Date date) {
+		Random prng = new Random(seed);
+		List<SimpleRecord> res = new ArrayList<SimpleRecord>();
+		for(int i = 0; i < numberOfRecords; i++) {
+			SimpleRecord sr = new SimpleRecord(numNumericalAttributes, numCategoricalAttributes, prng);
+			sr.setDateCreated(date);
+			res.add(sr);
+		}
+		return res;
+		
 	}
 	
 	// creates an empty record
@@ -138,7 +172,17 @@ public class SimpleRecord implements Record {
 		this.datecreated = new Date(message.getDateCreated());
 	}
 	
-	
-	
+	/**
+	 * Select a number uniformly at random in the range [min, max]
+	 * inclusive
+	 * @param prng - the source of randomness to use
+	 * @param max - any integer, can also be negative
+	 * @param min - any integer, can be negative
+	 * @return
+	 */
+	private static int getValInRange(Random prng, int max, int min) {
+		 int r = prng.nextInt((max - min) + 1) + min;
+		 return r;
+	}
 		
 }

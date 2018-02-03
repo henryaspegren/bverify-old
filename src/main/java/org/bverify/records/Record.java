@@ -84,27 +84,27 @@ public interface Record extends Serializable {
 	 */
 	public static Record parseRecord(byte[] data) throws InvalidProtocolBufferException {
 		BverifySerialization.Record message = BverifySerialization.Record.parseFrom(data);
-		Record newRecord;
-		switch (message.getRecordType()) {
-			case SIMPLE_RECORD:
-				newRecord = new SimpleRecord();
-				newRecord.parseFrom(data);
-				return newRecord;
-			case DEPOSIT:
-				newRecord = new Deposit();
-				newRecord.parseFrom(data);
-				return newRecord;
-			case WITHDRAWAL:
-				newRecord = new Withdrawal();
-				newRecord.parseFrom(data);
-				return newRecord;
-			case TRANSFER:
-				newRecord = new Transfer();
-				newRecord.parseFrom(data);
-				return newRecord;
-			default:
-				throw new InvalidProtocolBufferException("No serialization avaialble");
-			}
+		Record newRecord = null;
+		if(message.getRecordType().equals(BverifySerialization.Record.Type.SIMPLE_RECORD)) {
+			newRecord = new SimpleRecord();
+			newRecord.parseFrom(data);		
+		}
+		if(message.getRecordType().equals(BverifySerialization.Record.Type.DEPOSIT)) {
+			newRecord = new Deposit();
+			newRecord.parseFrom(data);	
+		}
+		if(message.getRecordType().equals(BverifySerialization.Record.Type.WITHDRAWAL)) {
+			newRecord = new Withdrawal();
+			newRecord.parseFrom(data);
+		}
+		if(message.getRecordType().equals(BverifySerialization.Record.Type.TRANSFER)) {
+			newRecord = new Transfer();
+			newRecord.parseFrom(data);
+		}
+		if(newRecord == null) {
+			throw new RuntimeException("No serialization defined");
+		}
+		return newRecord;
 	}
 		
 }

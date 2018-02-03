@@ -91,7 +91,7 @@ public class BVerifyServerTest extends BVerifyClientServerTest {
 			bverifyserver.addRecord(transfer); 				// 9
 			bverifyserver.addRecord(transfer); 				// 10
 			
-			RecordProof proof = bverifyserver.constructRecordProof(4);
+			RecordProof proof = bverifyserver.constructRecordProof(4, bverifyserver.getCurrentCommitmentNumber());
 			
 			// check that the proof is constructed for the right record
 			// and is valid

@@ -56,6 +56,13 @@ public class BVerifyServerUtils {
 	private int totalCommittedRecords;
 	private int totalCommitments;
 	
+	/**
+	 * In some situations we may not want to 
+	 * commit to the bitcoin blockchain (e.g. for testing 
+	 * and benchmarking throughput).
+	 */
+	private boolean commitToBitcoin;
+	
 	// TODO:  optimize this using an indexing scheme
 	// and reduce redundancy 
 	private HashMap<ByteBuffer, Integer> commitmentHashToVersion;
@@ -70,9 +77,11 @@ public class BVerifyServerUtils {
 	 * COMMIT_INTERVAL records are outstanding. 
 	 * This is a parameter that we can optimize
 	 */
-	private static final int COMMIT_INTERVAL = 3;
+	private static final int DEFAULT_COMMIT_INTERVAL = 3;
+	private final int commitInterval;
 	
-	public BVerifyServerUtils(CatenaServer srvr) {
+	
+	public BVerifyServerUtils(CatenaServer srvr, boolean commitToBitcoin, int commitInterval) {
         this.aggregator = new CryptographicRecordAggregator();
 		this.store = new ArrayStore<RecordAggregation,Record>();    
 		this.histtree = new HistoryTree<RecordAggregation, Record>(aggregator, store);
@@ -83,6 +92,13 @@ public class BVerifyServerUtils {
 		this.commitmentHashToVersion = new HashMap<ByteBuffer, Integer>();
 		this.commitmentHashToCommitmentNumber = new HashMap<ByteBuffer, Integer>();
 		this.commitmentNumberToVersionNumber = new HashMap<Integer, Integer>();
+		this.commitToBitcoin = commitToBitcoin;
+		this.commitInterval = commitInterval;
+	}
+	
+	
+	public BVerifyServerUtils(CatenaServer srvr) {
+		this(srvr, true, DEFAULT_COMMIT_INTERVAL);
 	}
 	
 	public void addRecord(Record r) throws InsufficientMoneyException {
@@ -93,14 +109,16 @@ public class BVerifyServerUtils {
 			this.totalRecords++;
 			int outstanding_records = totalRecords - totalCommittedRecords;
 			
-			assert outstanding_records <= BVerifyServerUtils.COMMIT_INTERVAL;
+			assert outstanding_records <= this.commitInterval;
 					
-			if(outstanding_records == BVerifyServerUtils.COMMIT_INTERVAL) {
+			if(outstanding_records == this.commitInterval) {
 				RecordAggregation currentAgg = this.histtree.agg();
 				byte[] hashAgg = currentAgg.getHash();
-				Transaction tx = this.bitcoinTxPublisher.appendStatement(hashAgg);
-				BVerifyServerUtils.log.info("Committing BVerify log with {} records to blockchain in txn {}",
-						this.totalRecords, tx.getHashAsString());
+				if(commitToBitcoin) {
+					Transaction tx = this.bitcoinTxPublisher.appendStatement(hashAgg);
+					BVerifyServerUtils.log.info("Committing BVerify log with {} records to blockchain in txn {}",
+							this.totalRecords, tx.getHashAsString());
+				}
 				int currentVersion = this.histtree.version();
 				this.totalCommitments++;
 				// commitments are zero indexed
@@ -124,15 +142,14 @@ public class BVerifyServerUtils {
 		return proof;
 	}
 	
-	public RecordProof constructRecordProof(int recordNumber) throws ProofError {
-		int currentCommitmentNumber = this.getCurrentCommitmentNumber();
+	public RecordProof constructRecordProof(int recordNumber, int commitmentNumber) throws ProofError {
 		if(this.totalCommittedRecords <= recordNumber) {
 			throw new ProofError(String.format("Record #{} has not been commited yet. So far only commited up to "
 					+ "Record #{}", 
 					recordNumber, this.getTotalNumberOfCommitments()-1));
 		}
-		int versionLastCommit = this.commitmentNumberToRecordNumber(this.getTotalNumberOfCommitments()-1);
-		RecordProof proof = new RecordProof(recordNumber, currentCommitmentNumber, versionLastCommit, this.histtree);
+		int commitmentRecordNumber = this.commitmentNumberToRecordNumber(commitmentNumber);
+		RecordProof proof = new RecordProof(recordNumber, commitmentNumber, commitmentRecordNumber, this.histtree);
 		return proof;
 	}
 	

@@ -123,7 +123,7 @@ public class BVerifyClientUtils {
 	 */
 	public Record getAndVerifyRecord(int recordNumber) throws ProofError {
 		RecordProof proof = 
-				this.bverifyserver.constructRecordProof(recordNumber);
+				this.bverifyserver.constructRecordProof(recordNumber, this.currentCommitmentNumber);
 		Record record = proof.getRecord();
 		
 		// look up the latest commitment hash 

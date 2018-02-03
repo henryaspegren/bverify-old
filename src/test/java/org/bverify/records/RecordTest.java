@@ -1,5 +1,8 @@
 package org.bverify.records;
 
+import java.util.Date;
+import java.util.List;
+
 import org.apache.commons.lang3.SerializationUtils;
 import org.bverify.accounts.Account;
 
@@ -135,6 +138,24 @@ public class RecordTest extends TestCase {
 			e.printStackTrace();
 			Assert.fail();
 		}
+	}
+	
+	public void testSimpleRecordGenerationFactory() {
+		int numRecords = 50;
+		Date date = new Date();
+		List<SimpleRecord> res = SimpleRecord.simpleRecordFacotry(913, numRecords, 3, 3, date);
+		List<SimpleRecord> res2 = SimpleRecord.simpleRecordFacotry(913, numRecords, 3, 3, date);
+		List<SimpleRecord> res3 = SimpleRecord.simpleRecordFacotry(123, numRecords, 3, 3, date);
+
+		// correct number of records
+		Assert.assertEquals(numRecords, res.size());
+		Assert.assertEquals(numRecords, res2.size());
+		Assert.assertEquals(numRecords, res3.size());
+
+		// same seed
+		Assert.assertEquals(res, res2);		
+		// different seed
+		Assert.assertNotEquals(res, res3);
 	}
 	
 }
