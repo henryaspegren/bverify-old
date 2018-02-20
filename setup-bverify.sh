@@ -1,16 +1,20 @@
-echo '-----------setting up B_Verify-----------------'
+#!/bin/bash
+
+echo '-----------------setting up b_verify-------------------------'
 
 rm -rf server && rm -rf client && mkdir server && mkdir client
 
-# install the fastsig library from the repo
-echo 'installing fastsig dependency' 
-mvn install:install-file -Dfile=fastsig.jar -DgroupId=fastsig -DartifactId=fastsig -Dpackaging=jar -Dversion=1
-
-# generate the google protobuf code
-echo 'generating protobuf serialization code'
+echo '-----------generating protobuf serialization code------------'
 mkdir src/generated
 protoc --java_out=src/generated serialization.proto 
 
+echo '---------------setting up bitcoind path----------------------'
+source set-env.sh
 
-echo '------------completed!-----------------------'
+echo '--------------building b_verify with maven-------------------'
+mvn clean install
+
+echo '-----------------------completed-----------------------------'
+
+
 
