@@ -9,7 +9,7 @@ Currently _b\_verify_ is in development and _is not ready for production use_.
 
 * Maven. Maven is used to manage builds and dependencies. Download it using apt-get or via the [Apache Maven website](https://maven.apache.org/).
 
-* Bitcoin. Download and install the official Bitcoin command line client [by following these instructions](https://bitcoin.org/en/full-node#what-is-a-full-node) from the Core Developers.  The Bitcoin client comes in two pieces - __bitcoind__ which is a daemon that syncs with the network and verifies the chain and __bitcoin-cli__ which you can use to interact with the blockchain. Take a loot at the btc-scripts/README.md for more notes on this. There is also a Bitcoin GUI __bitcoin-qt__ that can be downloaded. Note that currently _b\_verify_ development uses Bitcoin only in regtest mode, so there is no need to download and verify the entire blockchain. To use _b\_verify_ trustlessly you will need to download and verify the entire chain 150+gb chain, but once that is done it completely fine to throw old blocks away and run a _pruned node_ that only takes up a few gb of space.
+* Bitcoin. Download and install the official Bitcoin command line client [by following these instructions](https://bitcoin.org/en/full-node#what-is-a-full-node) from the Core Developers.  The Bitcoin client comes in two pieces - `bitcoind` which is a daemon that syncs with the network and verifies the chain and `bitcoin-cli` which you can use to interact with the blockchain. Take a loot at the btc-scripts/README.md for more notes on this. There is also a Bitcoin GUI `bitcoin-qt` that can be downloaded. Note that currently _b\_verify_ development uses Bitcoin only in regtest mode, so there is no need to download and verify the entire blockchain. To use _b\_verify_ trustlessly you will need to download and verify the entire chain 150+gb chain, but once that is done it completely fine to throw old blocks away and run a _pruned node_ that only takes up a few gb of space.
 
 * Google Protobuf. Download and install [google protobuf](https://github.com/google/protobuf). This is used in _b\_verify_ to handle serialization of messages that is efficient and language agnostic. b\_verify only defines a message format and Google Protobuf creates code to serialize and deserialize the data. 
 
@@ -29,7 +29,7 @@ This should configure the environment and install _b\_verify_ using Maven. It al
 
 ## Notes on Maven 
 
-_To clean, recompile, test and install run_
+__To clean, recompile, test and install run__
 `$ mvn clean install`
 
 # Structure 
