@@ -13,31 +13,31 @@ Currently _b\_verify_ is in development and _is not ready for production use_.
 
 * Google Protobuf. Download and install [google protobuf](https://github.com/google/protobuf). This is used in _b\_verify_ to handle serialization of messages that is efficient and language agnostic. b\_verify only defines a message format and Google Protobuf creates code to serialize and deserialize the data. 
 
-* Fastsig. This is an implementation of the history tree datastructure that has been adapted for b\_verify. The source code is located [here](https://github.com/henryaspegren/fastsig). Clone the repo to a separate folder. 
+* Fastsig. This is an implementation of the history tree datastructure that has been adapted for _b\_verify_. The source code is located [here](https://github.com/henryaspegren/fastsig). Clone the repo to a separate folder. 
 
 ## Installation
-The building and testing of b\_verify is managed by Maven. 
+The building and testing of _b\_verify_ is managed by Maven. 
 
-1. First you need to install fastsig - the b\_verify data structure dependency library. Go into the folder where you have copied the source code and execute the build script
-$ sh build.sh
+1. First you need to install fastsig - the _b\_verify_ data structure dependency library. Go into the folder where you have copied the source code and execute the build script
+`$ sh build.sh`
 This script will generate the serialization code using google protobuf and install the fastsig library as a dependency using Maven. This script also runs the unit tests for the library and fails the build if any of the tests fail. 
 
 2. Next in the main project folder run
-$ sh setup-bverify.sh
-This should configure the environment and install b_verify using Maven. It also runs all unit tests and fails the build if any of the tests fail. You can also re-run any tests by typing 
-$ mvn test
+`$ sh setup-bverify.sh`
+This should configure the environment and install _b\_verify_ using Maven. It also runs all unit tests and fails the build if any of the tests fail. You can also re-run any tests by typing 
+`$ mvn test`
 
 ## Notes on Maven 
 
-__To clean, recompile, test and install run __
-$ mvn clean install
+_To clean, recompile, test and install run_
+`$ mvn clean install`
 
 # Structure 
 
-# Proofs
-The various proofs used by BVERIFY are in their own package and can be ported to any language 
+## Proofs
+The various proofs used by _b\_verify_ are in their own package and can be ported to any language 
 
-# Tests
+## Tests
 There are unit tests written in JUnit for the proofs and for the general system. Integration tests are coming soon.
 
 # Benchmarks 
