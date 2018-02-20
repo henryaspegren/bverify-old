@@ -3,23 +3,22 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>org.bverify</groupId>
-  <artifactId>bverify</artifactId>
+  <artifactId>b_verify</artifactId>
   <packaging>jar</packaging>
 
-  <name>bverify</name>
-  <url>http://maven.apache.org</url>
+  <name>b_verify</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>1.9</maven.compiler.source>
     <maven.compiler.target>1.9</maven.compiler.target>
   </properties>
-  <dependencies>
-    <dependency>
-      <groupId>fastsig</groupId>
-      <artifactId>fastsig</artifactId>
-      <version>1</version>
-     </dependency>  
+  
+  <build>
+  	<sourceDirectory>src</sourceDirectory>
+  	<testSourceDirectory>test</testSourceDirectory>
+  </build>
+  <dependencies>  
 	<!-- https://mvnrepository.com/artifact/junit/junit -->
 	<dependency>
 	    <groupId>junit</groupId>
@@ -76,6 +75,11 @@
 	    <groupId>org.apache.commons</groupId>
 	    <artifactId>commons-csv</artifactId>
 	    <version>1.4</version>
+	</dependency>
+	<dependency>
+		<groupId>b_verify</groupId>
+		<artifactId>fastsig</artifactId>
+		<version>2.0</version>
 	</dependency>
   </dependencies>
   <version>2.0</version>
