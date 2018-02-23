@@ -42,7 +42,7 @@ fi
 
 if [ "$(uname -s)" = "Darwin" ]; then
     echo "Mac OS X detected... "
-    btc_srcs=$HOME/repos/bitcoin/src
+    btc_srcs=/usr/bin/
     if [ -d "$btc_srcs" -a -f "$btc_srcs/bitcoind" ]; then
         export PATH="$PATH:$btc_srcs"
         echo "Added bitcoind compiled binaries in '$btc_srcs' to \$PATH."

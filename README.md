@@ -15,6 +15,8 @@ Currently _b\_verify_ is in development and _is not ready for production use_.
 
 * Fastsig. This is an implementation of the history tree datastructure that has been adapted for _b\_verify_. The source code is located [here](https://github.com/henryaspegren/fastsig). Clone the repo to a separate folder. 
 
+* jq. One of the testing libraries uses [jq](https://github.com/stedolan/jq/) - a json command line parses. This can be installed on OSx with `brew install jq` and on Linux with `apt-get install jq`.
+
 ## Installation
 The building and testing of _b\_verify_ is managed by Maven. 
 
